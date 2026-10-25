@@ -12,93 +12,303 @@
       color: #e6edf3;
       line-height: 1.6;
       min-height: 100vh;
-      padding: 2rem;
+      padding: 1.5rem;
     }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #f0f6fc; }
-    .subtitle { color: #8b949e; margin-bottom: 2rem; }
-    .stats { display: flex; gap: 2rem; margin-bottom: 2rem; color: #8b949e; font-size: 0.9rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+    h1 { font-size: 1.8rem; color: #f0f6fc; }
+    .subtitle { color: #8b949e; max-width: 500px; }
+    .stats { display: flex; gap: 1.5rem; margin-top: 0.5rem; color: #8b949e; font-size: 0.85rem; }
     .stat strong { color: #f0f6fc; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-    .card {
+    main { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .panel {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 1rem;
-      transition: border-color 0.2s, transform 0.2s;
+      overflow: hidden;
     }
-    .card:hover { border-color: #58a6ff; transform: translateY(-2px); }
-    .char { font-size: 2.5rem; font-weight: bold; color: #f0f6fc; }
-    .pinyin { color: #a371f7; font-size: 0.9rem; margin: 0.25rem 0; }
-    .meaning { color: #8b949e; font-size: 0.85rem; }
-    .compounds { margin-top: 2rem; }
-    .compounds h2 { font-size: 1.5rem; margin-bottom: 1rem; }
-    .compound-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .compound-tag {
-      background: #21262d;
+    .panel-header {
+      padding: 1rem; border-bottom: 1px solid #30363d;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-header h2 { font-size: 1.1rem; color: #f0f6fc; }
+    .panel-body { padding: 1rem; max-height: 70vh; overflow-y: auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+    .card {
+      background: #161b22;
       border: 1px solid #30363d;
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #e6edf3;
+      border-radius: 6px;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
     }
-    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.85rem; text-align: center; }
+    .card:hover { border-color: #58a6ff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(88,166,255,0.15); }
+    .card.selected { border-color: #58a6ff; box-shadow: 0 0 0 2px rgba(88,166,255,0.3); }
+    .card-char { font-size: 2rem; font-weight: bold; color: #f0f6fc; text-align: center; line-height: 1.2; }
+    .card-pinyin { color: #a371f7; font-size: 0.8rem; text-align: center; margin-top: 0.25rem; }
+    .card-meaning { color: #8b949e; font-size: 0.75rem; text-align: center; margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .compound-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .compound-tag {
+      background: #21262d; border: 1px solid #30363d;
+      padding: 0.35rem 0.7rem; border-radius: 4px;
+      font-size: 0.8rem; color: #e6edf3; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .compound-tag:hover { border-color: #58a6ff; background: #1f6feb22; }
+    .compound-tag.selected { border-color: #58a6ff; background: #1f6feb33; }
+    /* Detail panel */
+    .detail-empty { color: #8b949e; text-align: center; padding: 3rem 1rem; }
+    .detail-title { font-size: 3rem; font-weight: bold; color: #f0f6fc; text-align: center; margin-bottom: 0.25rem; }
+    .detail-pinyin { color: #a371f7; text-align: center; margin-bottom: 1rem; font-size: 1.1rem; }
+    .detail-type { display: inline-block; background: #1f6feb22; color: #58a6ff; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; margin-bottom: 1rem; }
+    .detail-section { margin-bottom: 1.25rem; }
+    .detail-section h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .detail-section h3::before { content: ""; width: 8px; height: 8px; background: #58a6ff; border-radius: 2px; }
+    .detail-meaning { font-size: 1rem; color: #e6edf3; line-height: 1.7; }
+    .components-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .component-tag { background: #21262d; border: 1px solid #30363d; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; color: #c9d1d9; }
+    .story { color: #c9d1d9; font-style: italic; line-height: 1.7; }
+    .common-words { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .word-tag { background: #1f6feb1a; border: 1px solid #1f6feb44; color: #a5d6ff; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; }
+    .animation-placeholder {
+      background: #0d1117; border: 1px dashed #30363d; border-radius: 6px;
+      padding: 2rem; text-align: center; color: #8b949e;
+      font-family: monospace; font-size: 0.85rem;
+    }
+    .animation-placeholder .anim-name { color: #f0f6fc; font-weight: bold; font-size: 1rem; display: block; margin-bottom: 0.5rem; }
+    footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.8rem; text-align: center; }
     a { color: #58a6ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .search-box {
+      width: 100%; padding: 0.6rem 0.85rem; background: #0d1117; border: 1px solid #30363d;
+      border-radius: 6px; color: #e6edf3; font-size: 0.9rem; margin-bottom: 1rem;
+      outline: none; transition: border-color 0.15s;
+    }
+    .search-box:focus { border-color: #58a6ff; }
+    .search-box::placeholder { color: #8b949e; }
+    .hidden { display: none !important; }
+    .tabs { display: flex; gap: 0.25rem; margin-bottom: 0.5rem; }
+    .tab { padding: 0.4rem 0.8rem; background: transparent; border: 1px solid #30363d; border-radius: 4px 4px 0 0; color: #8b949e; cursor: pointer; font-size: 0.8rem; }
+    .tab.active { background: #161b22; border-bottom-color: #161b22; color: #f0f6fc; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>learn-rust-multilang</h1>
-    <p class="subtitle">Chinese characters for algorithm & programming vocabulary — meaning-based SVG animations</p>
-    <div class="stats">
-      <div class="stat"><strong id="count-single">0</strong> single characters</div>
-      <div class="stat"><strong id="count-compound">0</strong> compound words</div>
-      <div class="stat">Source: <a href="https://algo.course.rs" target="_blank">algo.course.rs</a></div>
-    </div>
-    <section>
-      <h2 style="margin-bottom:1rem;">Single Characters</h2>
-      <div class="grid" id="singles"></div>
-    </section>
-    <section class="compounds">
-      <h2>Compound Words</h2>
-      <div class="compound-list" id="compounds"></div>
-    </section>
+    <header>
+      <div>
+        <h1>learn-rust-multilang</h1>
+        <p class="subtitle">Chinese characters for algorithm & programming vocabulary — meaning-based SVG animations</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong id="count-single">0</strong> single characters</div>
+        <div class="stat"><strong id="count-compound">0</strong> compound words</div>
+        <div class="stat">Source: <a href="https://algo.course.rs" target="_blank">algo.course.rs</a></div>
+      </div>
+    </header>
+    <main>
+      <section class="panel" aria-label="Character grid">
+        <div class="panel-header">
+          <h2>Characters & Words</h2>
+          <select id="filter-type" style="background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:0.3rem 0.6rem;border-radius:4px;font-size:0.8rem;">
+            <option value="all">All</option>
+            <option value="single">Single Characters</option>
+            <option value="compound">Compound Words</option>
+          </select>
+        </div>
+        <div class="panel-body">
+          <input type="text" id="search" class="search-box" placeholder="Search by character, pinyin, or meaning...">
+          <div class="tabs">
+            <button class="tab active" data-tab="singles">Single Characters</button>
+            <button class="tab" data-tab="compounds">Compound Words</button>
+          </div>
+          <div id="tab-singles" class="tab-content active">
+            <div class="grid" id="singles"></div>
+          </div>
+          <div id="tab-compounds" class="tab-content">
+            <div class="compound-list" id="compounds"></div>
+          </div>
+        </div>
+      </section>
+      <aside class="panel" aria-label="Detail view">
+        <div class="panel-header">
+          <h2 id="detail-header">Detail</h2>
+        </div>
+        <div class="panel-body" id="detail">
+          <div class="detail-empty">Click a character or word to see details</div>
+        </div>
+      </aside>
+    </main>
     <footer>
       Data: <code>src/characters.json</code> · Built for <a href="https://github.com/ArslanCS1993/learn-rust-multilang" target="_blank">GitHub Pages</a>
     </footer>
   </div>
   <script>
+    let allData = null;
+    let selectedKey = null;
+
     async function loadData() {
       try {
-        const res = await fetch('../src/characters.json');
-        const data = await res.json();
-        renderSingles(data.characters);
-        renderCompounds(data.characters);
+        const res = await fetch('characters.json');
+        allData = await res.json();
+        renderAll();
       } catch (e) {
         console.error('Failed to load characters.json', e);
+        document.getElementById('singles').innerHTML = '<div style="color:#f85149;padding:1rem;">Failed to load data</div>';
       }
     }
-    function renderSingles(chars) {
-      const container = document.getElementById('singles');
+
+    function renderAll() {
+      const chars = allData.characters;
       const singles = Object.entries(chars).filter(([k]) => k.length === 1);
+      const compounds = Object.entries(chars).filter(([k]) => k.length > 1);
       document.getElementById('count-single').textContent = singles.length;
-      container.innerHTML = singles.map(([char, info]) => `
-        <div class="card">
-          <div class="char">${char}</div>
-          <div class="pinyin">${info.pinyin}</div>
-          <div class="meaning">${info.meaning}</div>
+      document.getElementById('count-compound').textContent = compounds.length;
+      renderGrid(singles, 'singles');
+      renderCompoundList(compounds, 'compounds');
+      setupTabs();
+      setupSearch();
+      setupFilter();
+    }
+
+    function renderGrid(items, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(([key, info]) => `
+        <div class="card" data-key="${escapeHtml(key)}" tabindex="0" role="button" aria-label="${escapeHtml(key)}: ${escapeHtml(info.meaning)}">
+          <div class="card-char">${escapeHtml(key)}</div>
+          <div class="card-pinyin">${escapeHtml(info.pinyin)}</div>
+          <div class="card-meaning">${escapeHtml(info.meaning)}</div>
         </div>
       `).join('');
+      container.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', () => selectCard(card.dataset.key));
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCard(card.dataset.key); } });
+      });
     }
-    function renderCompounds(chars) {
-      const container = document.getElementById('compounds');
-      const compounds = Object.entries(chars).filter(([k]) => k.length > 1);
-      document.getElementById('count-compound').textContent = compounds.length;
-      container.innerHTML = compounds.map(([word, info]) => `
-        <span class="compound-tag">${word} (${info.pinyin})</span>
+
+    function renderCompoundList(items, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(([key, info]) => `
+        <span class="compound-tag" data-key="${escapeHtml(key)}" tabindex="0" role="button" aria-label="${escapeHtml(key)}: ${escapeHtml(info.meaning)}">
+          ${escapeHtml(key)} (${escapeHtml(info.pinyin)})
+        </span>
       `).join('');
+      container.querySelectorAll('.compound-tag').forEach(tag => {
+        tag.addEventListener('click', () => selectCard(tag.dataset.key));
+        tag.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCard(tag.dataset.key); } });
+      });
     }
+
+    function selectCard(key) {
+      selectedKey = key;
+      document.querySelectorAll('.card, .compound-tag').forEach(el => {
+        el.classList.toggle('selected', el.dataset.key === key);
+      });
+      renderDetail(key);
+    }
+
+    function renderDetail(key) {
+      const info = allData.characters[key];
+      if (!info) return;
+      const isCompound = key.length > 1;
+      document.getElementById('detail-header').textContent = isCompound ? 'Compound Word' : 'Character';
+      document.getElementById('detail').innerHTML = `
+        <div class="detail-title">${escapeHtml(key)}</div>
+        <div class="detail-pinyin">${escapeHtml(info.pinyin)}</div>
+        <span class="detail-type">${isCompound ? 'Compound Word' : 'Single Character'}</span>
+        <div class="detail-section">
+          <h3>Meaning</h3>
+          <div class="detail-meaning">${escapeHtml(info.meaning)}</div>
+        </div>
+        ${info.components ? `
+        <div class="detail-section">
+          <h3>Components</h3>
+          <div class="components-list">
+            ${info.components.map(c => `<span class="component-tag">${escapeHtml(c)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${info.story ? `
+        <div class="detail-section">
+          <h3>Mnemonic Story</h3>
+          <div class="story">${escapeHtml(info.story)}</div>
+        </div>` : ''}
+        ${info.commonWords && info.commonWords.length ? `
+        <div class="detail-section">
+          <h3>Common Words</h3>
+          <div class="common-words">
+            ${info.commonWords.map(w => `<span class="word-tag">${escapeHtml(w)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${info.svgAnimation ? `
+        <div class="detail-section">
+          <h3>SVG Animation</h3>
+          <div class="animation-placeholder">
+            <span class="anim-name">${escapeHtml(info.svgAnimation)}</span>
+            Animation not yet implemented — placeholder key only
+          </div>
+        </div>` : ''}
+      `;
+    }
+
+    function setupTabs() {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+      });
+    }
+
+    function setupSearch() {
+      const input = document.getElementById('search');
+      input.addEventListener('input', () => {
+        const q = input.value.toLowerCase().trim();
+        const activeTab = document.querySelector('.tab.active').dataset.tab;
+        const items = activeTab === 'singles'
+          ? Object.entries(allData.characters).filter(([k]) => k.length === 1)
+          : Object.entries(allData.characters).filter(([k]) => k.length > 1);
+        const filtered = items.filter(([key, info]) =>
+          key.toLowerCase().includes(q) ||
+          info.pinyin.toLowerCase().includes(q) ||
+          info.meaning.toLowerCase().includes(q)
+        );
+        if (activeTab === 'singles') renderGrid(filtered, 'singles');
+        else renderCompoundList(filtered, 'compounds');
+      });
+    }
+
+    function setupFilter() {
+      const select = document.getElementById('filter-type');
+      select.addEventListener('change', () => {
+        const val = select.value;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        if (val === 'compound') {
+          document.querySelector('.tab[data-tab="compounds"]').classList.add('active');
+          document.getElementById('tab-compounds').classList.add('active');
+        } else if (val === 'single') {
+          document.querySelector('.tab[data-tab="singles"]').classList.add('active');
+          document.getElementById('tab-singles').classList.add('active');
+        } else {
+          document.querySelector('.tab[data-tab="singles"]').classList.add('active');
+          document.getElementById('tab-singles').classList.add('active');
+        }
+        document.getElementById('search').value = '';
+      });
+    }
+
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      return String(text).replace(/[&<>"']/g, m => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m]));
+    }
+
     loadData();
   </script>
 </body>
