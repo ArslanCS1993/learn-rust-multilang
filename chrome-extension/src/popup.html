@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algorithm Chinese Vocab</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 420px;
+      max-height: 600px;
+      overflow-y: auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+    .header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: #0d1117;
+      z-index: 10;
+    }
+    .header h1 { font-size: 14px; font-weight: 600; color: #f0f6fc; }
+    .header .stats { font-size: 11px; color: #8b949e; }
+    .search-box {
+      padding: 8px 16px;
+      border-bottom: 1px solid #30363d;
+      position: sticky;
+      top: 41px;
+      background: #0d1117;
+      z-index: 9;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: #161b22;
+      color: #e6edf3;
+      font-size: 13px;
+      outline: none;
+    }
+    .search-box input:focus { border-color: #58a6ff; }
+    .section { padding: 0 16px; }
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+      padding: 12px 0 6px;
+      font-weight: 600;
+    }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .card:hover { border-color: #58a6ff; background: #1c2128; }
+    .card.compound { grid-column: span 2; display: flex; align-items: center; gap: 12px; }
+    .char { font-size: 24px; font-weight: 700; color: #f0f6fc; line-height: 1; }
+    .card.compound .char { font-size: 20px; min-width: 40px; text-align: center; }
+    .info { flex: 1; min-width: 0; }
+    .pinyin { font-size: 11px; color: #a371f7; margin-bottom: 2px; }
+    .meaning { font-size: 12px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card.compound .meaning { font-size: 11px; }
+    .story-btn {
+      font-size: 10px;
+      padding: 2px 8px;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      background: transparent;
+      color: #8b949e;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .story-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .modal-content {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 360px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .modal-char { font-size: 36px; font-weight: 700; color: #f0f6fc; }
+    .modal-pinyin { font-size: 14px; color: #a371f7; }
+    .modal-close { background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; line-height: 1; }
+    .modal-close:hover { color: #f0f6fc; }
+    .modal-story { font-size: 13px; color: #e6edf3; margin-bottom: 12px; }
+    .modal-components, .modal-words { font-size: 12px; color: #8b949e; }
+    .modal-components strong, .modal-words strong { color: #f0f6fc; }
+    .footer { padding: 12px 16px; border-top: 1px solid #30363d; text-align: center; font-size: 11px; color: #8b949e; }
+    .footer a { color: #58a6ff; text-decoration: none; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Algorithm Chinese Vocab</h1>
+    <span class="stats" id="stats">0 chars / 0 compounds</span>
+  </div>
+  <div class="search-box">
+    <input type="text" id="search" placeholder="Search by character, pinyin, or meaning...">
+  </div>
+  <div class="section">
+    <div class="section-title" id="singles-title">Single Characters</div>
+    <div class="grid" id="singles-grid"></div>
+  </div>
+  <div class="section">
+    <div class="section-title" id="compounds-title">Compound Words</div>
+    <div class="grid" id="compounds-grid"></div>
+  </div>
+  <div class="footer">
+    Data from <a href="https://algo.course.rs" target="_blank">algo.course.rs</a> · <a href="https://github.com/ArslanCS1993/learn-rust-multilang" target="_blank">GitHub</a>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <div class="modal-char" id="modal-char"></div>
+          <div class="modal-pinyin" id="modal-pinyin"></div>
+        </div>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-story" id="modal-story"></div>
+      <div class="modal-components" id="modal-components"></div>
+      <div class="modal-words" id="modal-words"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Algorithm Chinese Vocab",
+  "version": "1.0.0",
+  "description": "Chinese characters for algorithm & programming vocabulary with pinyin, meaning, and mnemonic stories",
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "Algorithm Chinese Vocab"
+  },
+  "permissions": ["storage"],
+  "host_permissions": []
+}
