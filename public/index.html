@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>learn-rust-multilang — Chinese Algorithm Vocab</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #f0f6fc; }
+    .subtitle { color: #8b949e; margin-bottom: 2rem; }
+    .stats { display: flex; gap: 2rem; margin-bottom: 2rem; color: #8b949e; font-size: 0.9rem; }
+    .stat strong { color: #f0f6fc; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: #58a6ff; transform: translateY(-2px); }
+    .char { font-size: 2.5rem; font-weight: bold; color: #f0f6fc; }
+    .pinyin { color: #a371f7; font-size: 0.9rem; margin: 0.25rem 0; }
+    .meaning { color: #8b949e; font-size: 0.85rem; }
+    .compounds { margin-top: 2rem; }
+    .compounds h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .compound-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .compound-tag {
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #e6edf3;
+    }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.85rem; text-align: center; }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>learn-rust-multilang</h1>
+    <p class="subtitle">Chinese characters for algorithm & programming vocabulary — meaning-based SVG animations</p>
+    <div class="stats">
+      <div class="stat"><strong id="count-single">0</strong> single characters</div>
+      <div class="stat"><strong id="count-compound">0</strong> compound words</div>
+      <div class="stat">Source: <a href="https://algo.course.rs" target="_blank">algo.course.rs</a></div>
+    </div>
+    <section>
+      <h2 style="margin-bottom:1rem;">Single Characters</h2>
+      <div class="grid" id="singles"></div>
+    </section>
+    <section class="compounds">
+      <h2>Compound Words</h2>
+      <div class="compound-list" id="compounds"></div>
+    </section>
+    <footer>
+      Data: <code>src/characters.json</code> · Built for <a href="https://github.com/ArslanCS1993/learn-rust-multilang" target="_blank">GitHub Pages</a>
+    </footer>
+  </div>
+  <script>
+    async function loadData() {
+      try {
+        const res = await fetch('../src/characters.json');
+        const data = await res.json();
+        renderSingles(data.characters);
+        renderCompounds(data.characters);
+      } catch (e) {
+        console.error('Failed to load characters.json', e);
+      }
+    }
+    function renderSingles(chars) {
+      const container = document.getElementById('singles');
+      const singles = Object.entries(chars).filter(([k]) => k.length === 1);
+      document.getElementById('count-single').textContent = singles.length;
+      container.innerHTML = singles.map(([char, info]) => `
+        <div class="card">
+          <div class="char">${char}</div>
+          <div class="pinyin">${info.pinyin}</div>
+          <div class="meaning">${info.meaning}</div>
+        </div>
+      `).join('');
+    }
+    function renderCompounds(chars) {
+      const container = document.getElementById('compounds');
+      const compounds = Object.entries(chars).filter(([k]) => k.length > 1);
+      document.getElementById('count-compound').textContent = compounds.length;
+      container.innerHTML = compounds.map(([word, info]) => `
+        <span class="compound-tag">${word} (${info.pinyin})</span>
+      `).join('');
+    }
+    loadData();
+  </script>
+</body>
+</html>
