@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>冒泡排序 - Learn Rust Multilang</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .layout { display: grid; grid-template-columns: 280px 1fr 340px; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+    /* Sidebar */
+    .sidebar {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem;
+      height: fit-content;
+      position: sticky;
+      top: 1.5rem;
+      max-height: calc(100vh - 3rem);
+      overflow-y: auto;
+    }
+    .sidebar h3 { font-size: 0.85rem; color: #8b949e; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .nav-list { list-style: none; }
+    .nav-item { margin-bottom: 0.25rem; }
+    .nav-link {
+      display: block; padding: 0.4rem 0.6rem; border-radius: 4px;
+      color: #c9d1d9; text-decoration: none; font-size: 0.85rem;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover { background: #21262d; color: #f0f6fc; }
+    .nav-link.active { background: #1f6feb22; color: #58a6ff; }
+    .nav-link.chapter { font-weight: 600; }
+    .nav-link.section { padding-left: 1.5rem; font-size: 0.8rem; }
+    /* Main content */
+    .main { min-width: 0; }
+    .article-header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #30363d; }
+    .breadcrumb { font-size: 0.8rem; color: #8b949e; margin-bottom: 0.75rem; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .article-title { font-size: 2rem; color: #f0f6fc; margin-bottom: 0.5rem; }
+    .article-meta { color: #8b949e; font-size: 0.85rem; }
+    .content { font-size: 1rem; line-height: 1.8; }
+    .content h2 { font-size: 1.5rem; color: #f0f6fc; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #30363d; }
+    .content h3 { font-size: 1.2rem; color: #d2d7db; margin: 1.5rem 0 0.75rem; }
+    .content p { margin-bottom: 1rem; }
+    .content code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: #161b22; border: 1px solid #30363d;
+      padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; color: #f0f6fc;
+    }
+    .content pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+    .content pre code { background: none; border: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+    .content .comment { color: #6a737d; font-style: italic; }
+    .content .keyword { color: #ff7b72; }
+    .content .function { color: #d2a8ff; }
+    .content .string { color: #a5d6ff; }
+    .content .number { color: #79c0ff; }
+    /* Clickable Chinese text */
+    .chinese-word {
+      cursor: help;
+      border-bottom: 1px dotted #58a6ff;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .chinese-word:hover { border-color: #a371f7; background: #1f6feb1a; }
+    .chinese-word.selected { border-color: #a371f7; background: #1f6feb33; box-shadow: 0 0 0 1px #a371f7; }
+    /* Detail panel */
+    .detail-panel {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem;
+      height: fit-content;
+      position: sticky;
+      top: 1.5rem;
+      max-height: calc(100vh - 3rem);
+      overflow-y: auto;
+    }
+    .detail-empty { color: #8b949e; text-align: center; padding: 2rem 1rem; font-size: 0.9rem; }
+    .detail-title { font-size: 2.5rem; font-weight: bold; color: #f0f6fc; text-align: center; margin-bottom: 0.25rem; line-height: 1.2; }
+    .detail-pinyin { color: #a371f7; text-align: center; margin-bottom: 1rem; font-size: 1.1rem; }
+    .detail-type { display: inline-block; background: #1f6feb22; color: #58a6ff; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; margin: 0 auto 1rem; display: block; text-align: center; max-width: fit-content; }
+    .detail-section { margin-bottom: 1.25rem; }
+    .detail-section h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .detail-section h4::before { content: ""; width: 6px; height: 6px; background: #58a6ff; border-radius: 2px; }
+    .detail-meaning { font-size: 0.95rem; color: #e6edf3; line-height: 1.6; }
+    .components-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .component-tag { background: #21262d; border: 1px solid #30363d; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; color: #c9d1d9; }
+    .story { color: #c9d1d9; font-style: italic; line-height: 1.6; font-size: 0.9rem; }
+    .common-words { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .word-tag { background: #1f6feb1a; border: 1px solid #1f6feb44; color: #a5d6ff; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: background 0.15s; }
+    .word-tag:hover { background: #1f6feb33; }
+    .animation-placeholder {
+      background: #0d1117; border: 1px dashed #30363d; border-radius: 6px;
+      padding: 1.5rem; text-align: center; color: #8b949e;
+      font-family: monospace; font-size: 0.8rem;
+    }
+    .animation-placeholder .anim-name { color: #f0f6fc; font-weight: bold; font-size: 0.95rem; display: block; margin-bottom: 0.4rem; }
+    /* Mobile toggle */
+    .mobile-toggle { display: none; padding: 0.5rem; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; margin-bottom: 1rem; }
+    @media (max-width: 1100px) {
+      .mobile-toggle { display: block; }
+      .sidebar, .detail-panel { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; background: #0d1117; border-radius: 0; max-height: none; padding: 1.5rem; overflow-y: auto; }
+      .sidebar.open, .detail-panel.open { display: block; }
+      .sidebar-close, .detail-close { display: block; margin-bottom: 1rem; padding: 0.5rem; background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; width: 100%; text-align: right; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-close" onclick="toggleSidebar()">✕ Close</button>
+      <h3>Rust 算法教程</h3>
+      <ul class="nav-list" id="nav-list"></ul>
+    </aside>
+
+    <!-- Main Article -->
+    <main class="main">
+      <article>
+        <header class="article-header">
+          <nav class="breadcrumb" id="breadcrumb"></nav>
+          <h1 class="article-title" id="article-title">冒泡排序</h1>
+          <div class="article-meta">Rust 算法教程 · 排序算法</div>
+        </header>
+        <div class="content" id="content"></div>
+      </article>
+    </main>
+
+    <!-- Detail Panel -->
+    <aside class="detail-panel" id="detail-panel">
+      <button class="detail-close" onclick="toggleDetail()">✕ Close</button>
+      <div id="detail-content">
+        <div class="detail-empty">Click any Chinese word in the text to see its meaning</div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // ===== CHARACTER DICTIONARY =====
+    const DICTIONARY = {
+      "算": { pinyin: "suàn", meaning: "calculate, algorithm, plan", components: ["bamboo (⺮)", "tool (工)"], story: "Ancient counting rods on a bamboo frame — the original computer", commonWords: ["算法", "计算", "算术", "打算", "估算"], svgAnimation: "abacus" },
+      "法": { pinyin: "fǎ", meaning: "method, law, way, technique", components: ["water (氵)", "go (去)"], story: "Water flowing through channels — a method guides flow like law guides society", commonWords: ["方法", "法律", "法则", "算法", "法宝"], svgAnimation: "scales" },
+      "程": { pinyin: "chéng", meaning: "process, procedure, journey", components: ["grain (禾)", "present (呈)"], story: "Measuring grain in stages — a process unfolds step by step", commonWords: ["程序", "过程", "工程", "行程", "课程"], svgAnimation: "pipeline" },
+      "序": { pinyin: "xù", meaning: "order, sequence, preface", components: ["loom (予)", "woman (女)"], story: "Weaving on a loom — threads must follow proper order", commonWords: ["顺序", "次序", "序列", "序言", "秩序"], svgAnimation: "loom" },
+      "排": { pinyin: "pái", meaning: "arrange, row, line up,排除", components: ["hand (扌)", "non- (非)"], story: "Hand arranging things that are not in order", commonWords: ["排序", "排列", "排除", "排行", "排练"], svgAnimation: "sorting" },
+      "泡": { pinyin: "pào", meaning: "bubble, soak, blister", components: ["water (氵)", "wrap (包)"], story: "Water wrapping air — a bubble forms", commonWords: ["冒泡", "泡沫", "泡茶", "泡面", "水泡"], svgAnimation: "bubbles" },
+      "冒": { pinyin: "mào", meaning: "emit, rise, brave, risk", components: ["cover (冖)", "eye (目)"], story: "Eyes peeking out from under a cover — emerging", commonWords: ["冒泡", "冒险", "冒充", "冒雨", "冒尖"], svgAnimation: "emerge" },
+      "排序": { pinyin: "pái xù", meaning: "sort, sorting (algorithm)", components: ["排", "序"], story: "Arranging into proper sequence", commonWords: ["排序算法", "快速排序", "归并排序", "冒泡排序"], svgAnimation: "sorting" },
+      "冒泡": { pinyin: "mào pào", meaning: "bubble up, bubbling", components: ["冒", "泡"], story: "Bubbles rising to the surface", commonWords: ["冒泡排序", "冒泡", "气泡"], svgAnimation: "bubbles" },
+      "冒泡排序": { pinyin: "mào pào pái xù", meaning: "bubble sort", components: ["冒泡", "排序"], story: "Larger elements bubble up like air bubbles in water", commonWords: ["冒泡排序算法", "优化冒泡排序"], svgAnimation: "bubbleSort" },
+      "函数": { pinyin: "hán shù", meaning: "function (programming)", components: ["含", "数"], story: "A box that contains numbers/operations", commonWords: ["函数定义", "函数调用", "主函数", "函数式编程"], svgAnimation: "function" },
+      "泛型": { pinyin: "fàn xíng", meaning: "generic (programming)", components: ["泛", "型"], story: "A shape that fits many types", commonWords: ["泛型参数", "泛型约束", "泛型编程"], svgAnimation: "generic" },
+      "部分": { pinyin: "bù fèn", meaning: "part, partial", components: ["部", "分"], story: "Dividing into sections", commonWords: ["部分", "局部", "部分有序"], svgAnimation: "partial" },
+      "有序": { pinyin: "yǒu xù", meaning: "ordered, in sequence", components: ["有", "序"], story: "Having proper order", commonWords: ["有序数组", "有序列表", "完全有序"], svgAnimation: "ordered" },
+      "数组": { pinyin: "shù zǔ", meaning: "array", components: ["数", "组"], story: "Numbers organized in a group", commonWords: ["数组长度", "数组元素", "动态数组"], svgAnimation: "array" },
+      "元素": { pinyin: "yuán sù", meaning: "element", components: ["元", "素"], story: "Fundamental essence/unit", commonWords: ["数组元素", "元素类型", "基本元素"], svgAnimation: "element" },
+      "长度": { pinyin: "cháng dù", meaning: "length", components: ["长", "度"], story: "Measuring how long", commonWords: ["数组长度", "字符串长度", "长度单位"], svgAnimation: "length" },
+      "循环": { pinyin: "xún huán", meaning: "loop, cycle", components: ["循", "环"], story: "Following a circular path", commonWords: ["for循环", "while循环", "循环体", "死循环"], svgAnimation: "loop" },
+      "标记": { pinyin: "biāo jì", meaning: "mark, flag, label", components: ["标", "记"], story: "Setting a sign to remember", commonWords: ["标记变量", "标记位", "做标记"], svgAnimation: "flag" },
+      "发生": { pinyin: "fā shēng", meaning: "happen, occur", components: ["发", "生"], story: "Something coming into being", commonWords: ["发生交换", "发生错误", "发生变化"], svgAnimation: "occur" },
+      "交换": { pinyin: "jiāo huàn", meaning: "swap, exchange", components: ["交", "换"], story: "Two things crossing paths and switching places", commonWords: ["交换位置", "交换变量", "交换排序"], svgAnimation: "swap" },
+      "最后": { pinyin: "zuì hòu", meaning: "last, finally", components: ["最", "后"], story: "The most behind position", commonWords: ["最后一个", "最后结果", "最后时刻"], svgAnimation: "last" },
+      "已经": { pinyin: "yǐ jīng", meaning: "already", components: ["已", "经"], story: "Already passed through", commonWords: ["已经排好", "已经完成", "已经存在"], svgAnimation: "already" },
+      "说明": { pinyin: "shuō míng", meaning: "indicate, explain", components: ["说", "明"], story: "Speaking clearly to explain", commonWords: ["说明文档", "说明书", "这说明"], svgAnimation: "explain" },
+      "优化": { pinyin: "yōu huà", meaning: "optimize, optimization", components: ["优", "化"], story: "Transforming into something better", commonWords: ["优化算法", "性能优化", "代码优化"], svgAnimation: "optimize" },
+      "算法": { pinyin: "suàn fǎ", meaning: "algorithm", components: ["算", "法"], story: "Calculation method — the recipe for computation", commonWords: ["排序算法", "查找算法", "算法复杂度"], svgAnimation: "algorithm" }
+    };
+
+    // ===== ARTICLE CONTENT =====
+    const ARTICLE = {
+      title: "冒泡排序",
+      breadcrumb: [
+        { text: "Rust算法教程", url: "#" },
+        { text: "排序", url: "#" },
+        { text: "冒泡排序", url: null }
+      ],
+      sections: [
+        {
+          id: "intro",
+          title: "冒泡排序",
+          content: `
+            <p><strong>冒泡排序</strong> 是一种简单的<strong>排序算法</strong>。它的工作原理是：重复地遍历要排序的<strong>数组</strong>，每次比较相邻的两个<strong>元素</strong>，如果它们的顺序错误就把它们<strong>交换</strong>过来。</p>
+            <p>遍历<strong>数组</strong>的过程会重复进行，直到没有再需要<strong>交换</strong>，也就是<strong>数组</strong>已经<strong>有序</strong>。这个<strong>算法</strong>的名字由来是因为越大的<strong>元素</strong>会像<strong>气泡</strong>一样慢慢“<strong>冒泡</strong>”到<strong>数组</strong>的末端。</p>
+          `
+        },
+        {
+          id: "implementation",
+          title: "Rust 实现",
+          content: `
+            <pre><code><span class="keyword">pub fn</span> <span class="function">bubble_sort</span><span class="keyword"><T: PartialOrd></span>(<span class="keyword">arr</span>: <span class="keyword">&mut</span> [<span class="keyword">T</span>]) {
+    <span class="keyword">if</span> <span class="keyword">arr</span>.<span class="function">len</span>() <span class="keyword"><=</span> <span class="number">1</span> {
+        <span class="keyword">return</span>;
+    }
+
+    <span class="keyword">let</span> <span class="keyword">size</span> = <span class="keyword">arr</span>.<span class="function">len</span>();
+    <span class="keyword">for</span> <span class="keyword">i</span> <span class="keyword">in</span> <span class="number">0</span>..(<span class="keyword">size</span> <span class="keyword">-</span> <span class="number">1</span>) {
+        <span class="comment">// 标记当前循环是否发生元素交换</span>
+        <span class="keyword">let mut</span> <span class="keyword">swapped</span> = <span class="keyword">false</span>;
+
+        <span class="comment">// 最后i个元素已经排好了顺序</span>
+        <span class="keyword">for</span> <span class="keyword">j</span> <span class="keyword">in</span> <span class="number">1</span>..(<span class="keyword">size</span> <span class="keyword">-</span> <span class="keyword">i</span>) {
+            <span class="keyword">if</span> <span class="keyword">arr</span>[<span class="keyword">j</span> <span class="keyword">-</span> <span class="number">1</span>] <span class="keyword">></span> <span class="keyword">arr</span>[<span class="keyword">j</span>] {
+                <span class="keyword">arr</span>.<span class="function">swap</span>(<span class="keyword">j</span> <span class="keyword">-</span> <span class="number">1</span>, <span class="keyword">j</span>);
+                <span class="keyword">swapped</span> = <span class="keyword">true</span>;
+            }
+        }
+
+        <span class="comment">// 如果当前循环没有发生元素交换，说明数组已经有序</span>
+        <span class="keyword">if</span> <span class="keyword">!</span><span class="keyword">swapped</span> {
+            <span class="keyword">break</span>;
+        }
+    }
+}</code></pre>
+          `
+        },
+        {
+          id: "explanation",
+          title: "代码讲解",
+          content: `
+            <h3>泛型参数</h3>
+            <p><code>T: PartialOrd</code> 表示这是一个<strong>泛型</strong><strong>函数</strong>，<code>T</code> 可以是任何实现了 <code>PartialOrd</code> trait（可比较）的类型。</p>
+
+            <h3>早期返回</h3>
+            <p><code>if arr.len() <= 1 { return; }</code> — 如果<strong>数组</strong><strong>长度</strong>为 0 或 1，直接返回，无需<strong>排序</strong>。</p>
+
+            <h3>外层循环</h3>
+            <p><code>for i in 0..(size - 1)</code> — 外层<strong>循环</strong>控制遍历的轮数，最多需要 <code>size - 1</code> 轮。</p>
+
+            <h3>标记变量</h3>
+            <p><code>let mut swapped = false</code> — 用一个<strong>标记</strong>变量记录本轮是否<strong>发生</strong>了<strong>交换</strong>。这是一个<strong>优化</strong>：如果某一轮完全没有<strong>交换</strong>，说明<strong>数组</strong>已经<strong>有序</strong>，可以提前结束。</p>
+
+            <h3>内层循环</h3>
+            <p><code>for j in 1..(size - i)</code> — 内层<strong>循环</strong>进行相邻<strong>元素</strong>比较。注意范围是 <code>size - i</code>，因为<strong>最后</strong> <code>i</code> 个<strong>元素</strong>已经<strong>排好</strong>顺序了，不需要再比较。</p>
+
+            <h3>比较与交换</h3>
+            <p><code>if arr[j - 1] > arr[j] { arr.swap(j - 1, j); swapped = true; }</code> — 如果前一个<strong>元素</strong>大于后一个，就<strong>交换</strong>它们，并把<strong>标记</strong>设为 true。</p>
+
+            <h3>提前退出</h3>
+            <p><code>if !swapped { break; }</code> — 如果本轮没<strong>发生</strong>任何<strong>交换</strong>，<strong>说明</strong><strong>数组</strong>已经<strong>有序</strong>，<strong>跳出</strong>外层<strong>循环</strong>。</p>
+          `
+        },
+        {
+          id: "complexity",
+          title: "复杂度分析",
+          content: `
+            <p><strong>时间复杂度</strong>：</p>
+            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+              <li>最好情况：O(n) — 数组已经<strong>有序</strong>，只需一轮遍历</li>
+              <li>最坏情况：O(n²) — 数组完全逆序</li>
+              <li>平均情况：O(n²)</li>
+            </ul>
+            <p><strong>空间复杂度</strong>：O(1) — 只使用常数额外空间</p>
+            <p><strong>稳定性</strong>：稳定排序 — 相等<strong>元素</strong>不会改变相对顺序</p>
+          `
+        }
+      ]
+    };
+
+    // ===== NAVIGATION DATA =====
+    const NAV = [
+      { type: 'chapter', title: '1. 排序', expanded: true, children: [
+        { title: '1.1. 冒泡排序', active: true },
+        { title: '1.2. 桶排序' },
+        { title: '1.3. 鸡尾酒排序' },
+        { title: '1.4. 梳排序' },
+        { title: '1.5. 计数排序' },
+        { title: '1.6. 地精排序' },
+        { title: '1.7. 堆排序' },
+        { title: '1.8. 插入排序' },
+        { title: '1.9. 归并排序' },
+        { title: '1.10. 奇偶排序' },
+        { title: '1.11. 快速排序' },
+        { title: '1.12. 基数排序' },
+        { title: '1.13. 选择排序' },
+        { title: '1.14. 希尔排序' },
+        { title: '1.15. 臭皮匠排序' },
+      ]},
+      { type: 'chapter', title: '2. 字符串', children: [
+        { title: '2.1. 逆序倒转' },
+        { title: '2.2. 数据转换算法' },
+        { title: '2.3. KMP算法' },
+        { title: '2.4. 马拉车算法' },
+        { title: '2.5. Rabin Karp算法' },
+      ]},
+      { type: 'chapter', title: '3. 查找算法', children: [
+        { title: '3.1. 二分查找' },
+        { title: '3.2. 递归二分查找' },
+        { title: '3.3. 查找第K小的元素' },
+        { title: '3.4. 线性搜索' },
+      ]},
+      { type: 'chapter', title: '4. 图论', children: [
+        { title: '4.1. 最短路径-Bellman Ford' },
+        { title: '4.2. 最短路径-Dijkstra' },
+        { title: '4.3. 深度优先搜索' },
+        { title: '4.4. 广度优先搜索' },
+      ]},
+      { type: 'chapter', title: '5. 动态规划', children: [
+        { title: '5.1. 斐波那契' },
+        { title: '5.2. 找钱' },
+        { title: '5.3. 最小编辑距离' },
+      ]},
+      { type: 'chapter', title: '10. 数据结构', children: [
+        { title: '10.1. B树' },
+        { title: '10.2. 二叉树' },
+        { title: '10.3. AVL树' },
+        { title: '10.4. 链表' },
+        { title: '10.5. 堆' },
+        { title: '10.6. 栈' },
+        { title: '10.7. 队列' },
+        { title: '10.8. Trie' },
+      ]},
+    ];
+
+    // ===== UTILITIES =====
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/[&<>"']/g, m => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m]));
+    }
+
+    // Tokenize Chinese text and wrap known words in clickable spans
+    function processChineseText(html) {
+      // Sort dictionary keys by length (longest first) to match compounds first
+      const keys = Object.keys(DICTIONARY).sort((a, b) => b.length - a.length);
+      let result = html;
+
+      // First, protect existing HTML tags
+      const tagPlaceholder = '___TAG_PLACEHOLDER___';
+      const tags = [];
+      result = result.replace(/<[^>]+>/g, (match) => {
+        tags.push(match);
+        return tagPlaceholder + (tags.length - 1) + tagPlaceholder;
+      });
+
+      // Now process text content - find Chinese sequences
+      const chineseRegex = /[\u4e00-\u9fff]+/g;
+      result = result.replace(chineseRegex, (match) => {
+        // Try to match longest dictionary entries first
+        let processed = match;
+        for (const key of keys) {
+          if (key.length > 1 && key.length <= match.length) {
+            const regex = new RegExp(escapeRegExp(key), 'g');
+            if (regex.test(match)) {
+              processed = processed.replace(regex, `<span class="chinese-word" data-word="${escapeHtml(key)}">${key}</span>`);
+            }
+          }
+        }
+        // Then handle single characters not part of compounds
+        for (const key of keys) {
+          if (key.length === 1) {
+            const regex = new RegExp(escapeRegExp(key), 'g');
+            if (regex.test(processed) && !processed.includes(`data-word="${escapeHtml(key)}"`)) {
+              processed = processed.replace(regex, `<span class="chinese-word" data-word="${escapeHtml(key)}">${key}</span>`);
+            }
+          }
+        }
+        return processed;
+      });
+
+      // Restore tags
+      tags.forEach((tag, i) => {
+        result = result.replace(tagPlaceholder + i + tagPlaceholder, tag);
+      });
+
+      return result;
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ===== RENDER FUNCTIONS =====
+    function renderNav() {
+      const container = document.getElementById('nav-list');
+      container.innerHTML = NAV.map(chapter => `
+        <li class="nav-item">
+          <span class="nav-link chapter">${escapeHtml(chapter.title)}</span>
+          ${chapter.children ? `<ul style="margin-top:0.25rem;">${chapter.children.map(child => `
+            <li class="nav-item">
+              <a class="nav-link section ${child.active ? 'active' : ''}" href="#">${escapeHtml(child.title)}</a>
+            </li>
+          `).join('')}</ul>` : ''}
+        </li>
+      `).join('');
+    }
+
+    function renderBreadcrumb() {
+      const container = document.getElementById('breadcrumb');
+      container.innerHTML = ARTICLE.breadcrumb.map((item, i) => `
+        ${i > 0 ? '<span style="margin:0 0.5rem;color:#30363d;">/</span>' : ''}
+        ${item.url ? `<a href="${item.url}">${escapeHtml(item.text)}</a>` : `<span>${escapeHtml(item.text)}</span>`}
+      `).join('');
+    }
+
+    function renderContent() {
+      const container = document.getElementById('content');
+      container.innerHTML = ARTICLE.sections.map(section => `
+        <section id="${section.id}">
+          <h2>${escapeHtml(section.title)}</h2>
+          ${processChineseText(section.content)}
+        </section>
+      `).join('');
+
+      document.getElementById('article-title').textContent = ARTICLE.title;
+
+      // Attach click handlers to Chinese words
+      document.querySelectorAll('.chinese-word').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const word = el.dataset.word;
+          selectWord(word, el);
+        });
+      });
+    }
+
+    let selectedEl = null;
+    function selectWord(word, el) {
+      if (selectedEl) selectedEl.classList.remove('selected');
+      el.classList.add('selected');
+      selectedEl = el;
+      renderDetail(word);
+      // On mobile, open detail panel
+      if (window.innerWidth <= 1100) {
+        document.getElementById('detail-panel').classList.add('open');
+      }
+    }
+
+    function renderDetail(word) {
+      const info = DICTIONARY[word];
+      const container = document.getElementById('detail-content');
+      if (!info) {
+        container.innerHTML = `<div class="detail-empty">No dictionary entry for "${escapeHtml(word)}"</div>`;
+        return;
+      }
+      const isCompound = word.length > 1;
+      container.innerHTML = `
+        <div class="detail-title">${escapeHtml(word)}</div>
+        <div class="detail-pinyin">${escapeHtml(info.pinyin)}</div>
+        <span class="detail-type">${isCompound ? 'Compound Word' : 'Single Character'}</span>
+        <div class="detail-section">
+          <h4>Meaning</h4>
+          <div class="detail-meaning">${escapeHtml(info.meaning)}</div>
+        </div>
+        ${info.components ? `
+        <div class="detail-section">
+          <h4>Components</h4>
+          <div class="components-list">
+            ${info.components.map(c => `<span class="component-tag">${escapeHtml(c)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${info.story ? `
+        <div class="detail-section">
+          <h4>Mnemonic Story</h4>
+          <div class="story">${escapeHtml(info.story)}</div>
+        </div>` : ''}
+        ${info.commonWords && info.commonWords.length ? `
+        <div class="detail-section">
+          <h4>Common Words</h4>
+          <div class="common-words">
+            ${info.commonWords.map(w => `<span class="word-tag" data-word="${escapeHtml(w)}">${escapeHtml(w)}</span>`).join('')}
+          </div>
+        </div>` : ''}
+        ${info.svgAnimation ? `
+        <div class="detail-section">
+          <h4>SVG Animation</h4>
+          <div class="animation-placeholder">
+            <span class="anim-name">${escapeHtml(info.svgAnimation)}</span>
+            Animation key only — not yet implemented
+          </div>
+        </div>` : ''}
+      `;
+
+      // Make common words clickable
+      container.querySelectorAll('.word-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+          const w = tag.dataset.word;
+          const el = document.querySelector(`.chinese-word[data-word="${CSS.escape(w)}"]`);
+          if (el) selectWord(w, el);
+          else renderDetail(w);
+        });
+      });
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+    function toggleDetail() {
+      document.getElementById('detail-panel').classList.toggle('open');
+    }
+
+    // ===== INIT =====
+    renderNav();
+    renderBreadcrumb();
+    renderContent();
+  </script>
+</body>
+</html>
