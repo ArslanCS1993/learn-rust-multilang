@@ -1,506 +1,766 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>冒泡排序 - Learn Rust Multilang</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      line-height: 1.7;
-      min-height: 100vh;
-    }
-    .layout { display: grid; grid-template-columns: 280px 1fr 340px; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
-    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
-    /* Sidebar */
-    .sidebar {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 1rem;
-      height: fit-content;
-      position: sticky;
-      top: 1.5rem;
-      max-height: calc(100vh - 3rem);
-      overflow-y: auto;
-    }
-    .sidebar h3 { font-size: 0.85rem; color: #8b949e; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .nav-list { list-style: none; }
-    .nav-item { margin-bottom: 0.25rem; }
-    .nav-link {
-      display: block; padding: 0.4rem 0.6rem; border-radius: 4px;
-      color: #c9d1d9; text-decoration: none; font-size: 0.85rem;
-      transition: background 0.15s, color 0.15s;
-    }
-    .nav-link:hover { background: #21262d; color: #f0f6fc; }
-    .nav-link.active { background: #1f6feb22; color: #58a6ff; }
-    .nav-link.chapter { font-weight: 600; }
-    .nav-link.section { padding-left: 1.5rem; font-size: 0.8rem; }
-    /* Main content */
-    .main { min-width: 0; }
-    .article-header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #30363d; }
-    .breadcrumb { font-size: 0.8rem; color: #8b949e; margin-bottom: 0.75rem; }
-    .breadcrumb a { color: #58a6ff; text-decoration: none; }
-    .breadcrumb a:hover { text-decoration: underline; }
-    .article-title { font-size: 2rem; color: #f0f6fc; margin-bottom: 0.5rem; }
-    .article-meta { color: #8b949e; font-size: 0.85rem; }
-    .content { font-size: 1rem; line-height: 1.8; }
-    .content h2 { font-size: 1.5rem; color: #f0f6fc; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #30363d; }
-    .content h3 { font-size: 1.2rem; color: #d2d7db; margin: 1.5rem 0 0.75rem; }
-    .content p { margin-bottom: 1rem; }
-    .content code {
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      background: #161b22; border: 1px solid #30363d;
-      padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; color: #f0f6fc;
-    }
-    .content pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
-    .content pre code { background: none; border: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
-    .content .comment { color: #6a737d; font-style: italic; }
-    .content .keyword { color: #ff7b72; }
-    .content .function { color: #d2a8ff; }
-    .content .string { color: #a5d6ff; }
-    .content .number { color: #79c0ff; }
-    /* Clickable Chinese text */
-    .chinese-word {
-      cursor: help;
-      border-bottom: 1px dotted #58a6ff;
-      transition: border-color 0.15s, background 0.15s;
-      position: relative;
-    }
-    .chinese-word:hover { border-color: #a371f7; background: #1f6feb1a; }
-    .chinese-word.selected { border-color: #a371f7; background: #1f6feb33; box-shadow: 0 0 0 1px #a371f7; }
-    /* Detail panel */
-    .detail-panel {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 1rem;
-      height: fit-content;
-      position: sticky;
-      top: 1.5rem;
-      max-height: calc(100vh - 3rem);
-      overflow-y: auto;
-    }
-    .detail-empty { color: #8b949e; text-align: center; padding: 2rem 1rem; font-size: 0.9rem; }
-    .detail-title { font-size: 2.5rem; font-weight: bold; color: #f0f6fc; text-align: center; margin-bottom: 0.25rem; line-height: 1.2; }
-    .detail-pinyin { color: #a371f7; text-align: center; margin-bottom: 1rem; font-size: 1.1rem; }
-    .detail-type { display: inline-block; background: #1f6feb22; color: #58a6ff; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; margin: 0 auto 1rem; display: block; text-align: center; max-width: fit-content; }
-    .detail-section { margin-bottom: 1.25rem; }
-    .detail-section h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
-    .detail-section h4::before { content: ""; width: 6px; height: 6px; background: #58a6ff; border-radius: 2px; }
-    .detail-meaning { font-size: 0.95rem; color: #e6edf3; line-height: 1.6; }
-    .components-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-    .component-tag { background: #21262d; border: 1px solid #30363d; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; color: #c9d1d9; }
-    .story { color: #c9d1d9; font-style: italic; line-height: 1.6; font-size: 0.9rem; }
-    .common-words { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-    .word-tag { background: #1f6feb1a; border: 1px solid #1f6feb44; color: #a5d6ff; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: background 0.15s; }
-    .word-tag:hover { background: #1f6feb33; }
-    .animation-placeholder {
-      background: #0d1117; border: 1px dashed #30363d; border-radius: 6px;
-      padding: 1.5rem; text-align: center; color: #8b949e;
-      font-family: monospace; font-size: 0.8rem;
-    }
-    .animation-placeholder .anim-name { color: #f0f6fc; font-weight: bold; font-size: 0.95rem; display: block; margin-bottom: 0.4rem; }
-    /* Mobile toggle */
-    .mobile-toggle { display: none; padding: 0.5rem; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; margin-bottom: 1rem; }
-    @media (max-width: 1100px) {
-      .mobile-toggle { display: block; }
-      .sidebar, .detail-panel { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; background: #0d1117; border-radius: 0; max-height: none; padding: 1.5rem; overflow-y: auto; }
-      .sidebar.open, .detail-panel.open { display: block; }
-      .sidebar-close, .detail-close { display: block; margin-bottom: 1rem; padding: 0.5rem; background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #f0f6fc; width: 100%; text-align: right; }
-    }
-  </style>
-</head>
-<body>
-  <div class="layout">
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar" id="sidebar">
-      <button class="sidebar-close" onclick="toggleSidebar()">✕ Close</button>
-      <h3>Rust 算法教程</h3>
-      <ul class="nav-list" id="nav-list"></ul>
-    </aside>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Dual-Panel Chinese Reader</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0e0f14',
+                        panelBg: '#151720',
+                        cardBg: '#1c1f2e',
+                        cardHover: '#24283b',
+                        accentBlue: '#3b82f6',
+                        accentPurple: '#8b5cf6',
+                        accentCyan: '#06b6d4',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for UI Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #0e0f14;
+            color: #e2e8f0;
+            user-select: text;
+        }
 
-    <!-- Main Article -->
-    <main class="main">
-      <article>
-        <header class="article-header">
-          <nav class="breadcrumb" id="breadcrumb"></nav>
-          <h1 class="article-title" id="article-title">冒泡排序</h1>
-          <div class="article-meta">Rust 算法教程 · 排序算法</div>
-        </header>
-        <div class="content" id="content"></div>
-      </article>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #121318; }
+        ::-webkit-scrollbar-thumb { background: #2b2f45; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        /* Compound Word Wrapper */
+        .hz-word-group {
+            display: inline-flex;
+            align-items: center;
+            padding: 1px 2px;
+            margin: 1px;
+            border-radius: 6px;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            background: rgba(30, 41, 59, 0.4);
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .hz-word-group:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+        .hz-word-group.word-active {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.25);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+        }
+
+        /* Individual Character Unit Inside Words */
+        .hz-char {
+            cursor: pointer;
+            padding: 1px 3px;
+            border-radius: 4px;
+            transition: all 0.12s ease;
+            display: inline-block;
+        }
+        .hz-char:hover {
+            background-color: rgba(6, 182, 212, 0.35);
+            color: #a5f3fc;
+            transform: translateY(-1px);
+        }
+        .hz-char.char-active {
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+        }
+
+        /* Pinyin Ruby Annotation Styling */
+        rt {
+            font-size: 0.62em;
+            color: #94a3b8;
+            font-weight: 400;
+            user-select: none;
+            line-height: 1.1;
+        }
+
+        /* SVG Visual Animations */
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.08); opacity: 1; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.8)); }
+        }
+        @keyframes floatData {
+            0% { transform: translateY(0px) scale(0.96); opacity: 0.7; }
+            50% { transform: translateY(-7px) scale(1.04); opacity: 1; }
+            100% { transform: translateY(0px) scale(0.96); opacity: 0.7; }
+        }
+        .anim-spin { animation: spinSlow 12s linear infinite; transform-origin: center; }
+        .anim-pulse { animation: pulseGlow 3s ease-in-out infinite; transform-origin: center; }
+        .anim-float { animation: floatData 3.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-darkBg text-slate-200">
+
+    <!-- Top Navigation Header -->
+    <header class="h-14 border-b border-slate-800/80 bg-panelBg/90 backdrop-blur flex items-center justify-between px-6 z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-blue-500/20">
+                译
+            </div>
+            <h1 class="text-sm md:text-base font-semibold text-slate-100 tracking-wide flex items-center gap-2">
+                <span>Chinese Dual-Panel Reader</span>
+                <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hidden sm:inline-block">Nested Character Inspector</span>
+            </h1>
+        </div>
+
+        <!-- Mode Switches & Custom Text Input -->
+        <div class="flex items-center gap-3 text-xs">
+            <!-- Click Mode Selection Toggle -->
+            <div class="bg-cardBg border border-slate-700/80 p-1 rounded-xl flex items-center gap-1">
+                <button id="modeWordBtn" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition flex items-center gap-1.5" title="Click whole compound words">
+                    <i class="fa-solid fa-layer-group"></i> <span>Word Mode</span>
+                </button>
+                <button id="modeCharBtn" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5" title="Click individual characters directly">
+                    <i class="fa-solid fa-font"></i> <span>Char Mode</span>
+                </button>
+            </div>
+
+            <button id="togglePinyinBtn" class="px-3 py-1.5 rounded-xl bg-cardBg hover:bg-slate-700 text-slate-300 font-medium border border-slate-700/80 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-language text-purple-400"></i>
+                <span id="pinyinBtnText">Show Pinyin</span>
+            </button>
+
+            <button id="editContentBtn" class="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-medium border border-blue-500/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Paste Text</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Split Area -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Left Reading Section -->
+        <section class="w-1/2 flex flex-col border-r border-slate-800/80 bg-darkBg relative">
+            <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-blue-400"></i>
+                    <span>Source Text (Click characters inside word blocks or highlight text)</span>
+                </div>
+                <button id="speakFullBtn" class="hover:text-blue-400 transition flex items-center gap-1" title="Read aloud">
+                    <i class="fa-solid fa-volume-high text-xs"></i> Speak Passage
+                </button>
+            </div>
+
+            <!-- Reading Passage Content -->
+            <div id="readingContainer" class="flex-1 overflow-y-auto p-8 space-y-6 text-xl md:text-2xl leading-relaxed text-slate-200">
+                <!-- Text populated via JavaScript -->
+            </div>
+
+            <!-- Custom Text Input Modal -->
+            <div id="editorModal" class="hidden absolute inset-0 bg-darkBg/95 backdrop-blur-md p-6 flex flex-col z-30">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines text-purple-400"></i> Custom Reading Passage
+                    </h3>
+                    <button id="closeEditorBtn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <textarea id="customTextInput" class="flex-1 bg-panelBg border border-slate-700/80 rounded-2xl p-4 text-slate-200 focus:outline-none focus:border-blue-500 font-mono text-sm leading-relaxed resize-none" placeholder="Paste Chinese text here..."></textarea>
+                <div class="mt-4 flex justify-end gap-3">
+                    <button id="resetDefaultBtn" class="px-4 py-2 rounded-xl bg-cardBg hover:bg-slate-700 text-slate-300 text-xs font-medium transition">Load Screenshot Passage</button>
+                    <button id="loadTextBtn" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition shadow-lg shadow-blue-500/20">
+                        Process & Read
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Side Breakdown & Visual Panel -->
+        <section class="w-1/2 flex flex-col bg-panelBg overflow-hidden">
+            
+            <!-- Quick Dictionary Search & Audio Bar -->
+            <div class="p-4 border-b border-slate-800/80 bg-panelBg/80 flex gap-3 items-center">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="dictionarySearch" placeholder="Search Hanzi, Pinyin or English..." class="w-full bg-cardBg border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
+                </div>
+                <button id="ttsButton" class="px-3.5 py-2 rounded-xl bg-cardBg border border-slate-700/80 hover:border-blue-500 text-blue-400 text-xs font-medium transition flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                    <span>Audio</span>
+                </button>
+            </div>
+
+            <!-- Scrollable Analysis Area -->
+            <div id="dictionaryDisplay" class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Main Compound / Character Card -->
+                <div class="bg-cardBg rounded-2xl p-6 border border-slate-700/50 shadow-2xl relative overflow-hidden">
+                    
+                    <!-- Glow Accents -->
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <!-- Phrase Title Header -->
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-baseline gap-3 flex-wrap">
+                                <h2 id="targetHanzi" class="text-4xl font-bold tracking-tight text-white">算法</h2>
+                                <span id="targetPinyin" class="text-lg text-purple-400 font-medium italic">suàn fǎ</span>
+                                <span id="targetPos" class="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-semibold tracking-wider uppercase">Noun</span>
+                            </div>
+                            <p id="targetEnglish" class="text-slate-300 mt-2 text-sm md:text-base font-medium">Algorithm; step-by-step procedure for calculation.</p>
+                        </div>
+                        <div id="targetEmoji" class="text-4xl bg-panelBg/80 border border-slate-700/60 p-3 rounded-2xl shadow-inner flex items-center justify-center shrink-0">
+                            🧮
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Animated SVG Concept Canvas -->
+                    <div class="mt-5 border border-slate-700/60 rounded-2xl bg-darkBg/80 p-5 flex flex-col items-center justify-center relative min-h-[160px]">
+                        <div id="svgContainer" class="w-full flex justify-center items-center">
+                            <!-- Animated SVG renders dynamically -->
+                        </div>
+                        <span id="svgCaption" class="text-[11px] text-slate-500 mt-2 font-mono tracking-wide">Concept Animation</span>
+                    </div>
+
+                    <!-- Nested Character Breakdown Section (Addresses Feedback) -->
+                    <div id="charBreakdownSection" class="mt-6 pt-5 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-puzzle-piece text-cyan-400"></i> Individual Character Breakdown</span>
+                            <span class="text-[10px] text-slate-500 font-normal">Click a character to inspect</span>
+                        </h4>
+                        <div id="charBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Character mini-cards rendered dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Related Words & Compounds -->
+                    <div class="mt-6 pt-5 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project text-blue-400"></i> Common Compound Words & Usage
+                        </h4>
+                        <div id="compoundWordsList" class="space-y-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Context Sentence -->
+                    <div class="mt-6 pt-5 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-quote-left text-purple-400"></i> Passage Context
+                        </h4>
+                        <p id="contextSentence" class="text-xs text-slate-300 italic leading-relaxed bg-panelBg/60 p-3 rounded-xl border border-slate-800/80">
+                            "算法是计算过程的具体描述..." — An algorithm is a detailed description of a computational process.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Detail Panel -->
-    <aside class="detail-panel" id="detail-panel">
-      <button class="detail-close" onclick="toggleDetail()">✕ Close</button>
-      <div id="detail-content">
-        <div class="detail-empty">Click any Chinese word in the text to see its meaning</div>
-      </div>
-    </aside>
-  </div>
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Exact passage from user screenshot + algorithm overview
+        const defaultSampleText = `算法，一个高大上的词汇，在计算机领域也绝对是凡人的禁忌，但是其实算法也没那么神秘，我们在写代码时，无时无刻都在与算法打交道，只是绝大部分算法我们无法感知到而已，因为这些算法已经很好地被包装在其它库中，我们只需要输入数据然后调用它获得输出数据即可，因此这就引出了算法的基本定义：
 
-  <script>
-    // ===== CHARACTER DICTIONARY =====
-    const DICTIONARY = {
-      "算": { pinyin: "suàn", meaning: "calculate, algorithm, plan", components: ["bamboo (⺮)", "tool (工)"], story: "Ancient counting rods on a bamboo frame — the original computer", commonWords: ["算法", "计算", "算术", "打算", "估算"], svgAnimation: "abacus" },
-      "法": { pinyin: "fǎ", meaning: "method, law, way, technique", components: ["water (氵)", "go (去)"], story: "Water flowing through channels — a method guides flow like law guides society", commonWords: ["方法", "法律", "法则", "算法", "法宝"], svgAnimation: "scales" },
-      "程": { pinyin: "chéng", meaning: "process, procedure, journey", components: ["grain (禾)", "present (呈)"], story: "Measuring grain in stages — a process unfolds step by step", commonWords: ["程序", "过程", "工程", "行程", "课程"], svgAnimation: "pipeline" },
-      "序": { pinyin: "xù", meaning: "order, sequence, preface", components: ["loom (予)", "woman (女)"], story: "Weaving on a loom — threads must follow proper order", commonWords: ["顺序", "次序", "序列", "序言", "秩序"], svgAnimation: "loom" },
-      "排": { pinyin: "pái", meaning: "arrange, row, line up,排除", components: ["hand (扌)", "non- (非)"], story: "Hand arranging things that are not in order", commonWords: ["排序", "排列", "排除", "排行", "排练"], svgAnimation: "sorting" },
-      "泡": { pinyin: "pào", meaning: "bubble, soak, blister", components: ["water (氵)", "wrap (包)"], story: "Water wrapping air — a bubble forms", commonWords: ["冒泡", "泡沫", "泡茶", "泡面", "水泡"], svgAnimation: "bubbles" },
-      "冒": { pinyin: "mào", meaning: "emit, rise, brave, risk", components: ["cover (冖)", "eye (目)"], story: "Eyes peeking out from under a cover — emerging", commonWords: ["冒泡", "冒险", "冒充", "冒雨", "冒尖"], svgAnimation: "emerge" },
-      "排序": { pinyin: "pái xù", meaning: "sort, sorting (algorithm)", components: ["排", "序"], story: "Arranging into proper sequence", commonWords: ["排序算法", "快速排序", "归并排序", "冒泡排序"], svgAnimation: "sorting" },
-      "冒泡": { pinyin: "mào pào", meaning: "bubble up, bubbling", components: ["冒", "泡"], story: "Bubbles rising to the surface", commonWords: ["冒泡排序", "冒泡", "气泡"], svgAnimation: "bubbles" },
-      "冒泡排序": { pinyin: "mào pào pái xù", meaning: "bubble sort", components: ["冒泡", "排序"], story: "Larger elements bubble up like air bubbles in water", commonWords: ["冒泡排序算法", "优化冒泡排序"], svgAnimation: "bubbleSort" },
-      "函数": { pinyin: "hán shù", meaning: "function (programming)", components: ["含", "数"], story: "A box that contains numbers/operations", commonWords: ["函数定义", "函数调用", "主函数", "函数式编程"], svgAnimation: "function" },
-      "泛型": { pinyin: "fàn xíng", meaning: "generic (programming)", components: ["泛", "型"], story: "A shape that fits many types", commonWords: ["泛型参数", "泛型约束", "泛型编程"], svgAnimation: "generic" },
-      "部分": { pinyin: "bù fèn", meaning: "part, partial", components: ["部", "分"], story: "Dividing into sections", commonWords: ["部分", "局部", "部分有序"], svgAnimation: "partial" },
-      "有序": { pinyin: "yǒu xù", meaning: "ordered, in sequence", components: ["有", "序"], story: "Having proper order", commonWords: ["有序数组", "有序列表", "完全有序"], svgAnimation: "ordered" },
-      "数组": { pinyin: "shù zǔ", meaning: "array", components: ["数", "组"], story: "Numbers organized in a group", commonWords: ["数组长度", "数组元素", "动态数组"], svgAnimation: "array" },
-      "元素": { pinyin: "yuán sù", meaning: "element", components: ["元", "素"], story: "Fundamental essence/unit", commonWords: ["数组元素", "元素类型", "基本元素"], svgAnimation: "element" },
-      "长度": { pinyin: "cháng dù", meaning: "length", components: ["长", "度"], story: "Measuring how long", commonWords: ["数组长度", "字符串长度", "长度单位"], svgAnimation: "length" },
-      "循环": { pinyin: "xún huán", meaning: "loop, cycle", components: ["循", "环"], story: "Following a circular path", commonWords: ["for循环", "while循环", "循环体", "死循环"], svgAnimation: "loop" },
-      "标记": { pinyin: "biāo jì", meaning: "mark, flag, label", components: ["标", "记"], story: "Setting a sign to remember", commonWords: ["标记变量", "标记位", "做标记"], svgAnimation: "flag" },
-      "发生": { pinyin: "fā shēng", meaning: "happen, occur", components: ["发", "生"], story: "Something coming into being", commonWords: ["发生交换", "发生错误", "发生变化"], svgAnimation: "occur" },
-      "交换": { pinyin: "jiāo huàn", meaning: "swap, exchange", components: ["交", "换"], story: "Two things crossing paths and switching places", commonWords: ["交换位置", "交换变量", "交换排序"], svgAnimation: "swap" },
-      "最后": { pinyin: "zuì hòu", meaning: "last, finally", components: ["最", "后"], story: "The most behind position", commonWords: ["最后一个", "最后结果", "最后时刻"], svgAnimation: "last" },
-      "已经": { pinyin: "yǐ jīng", meaning: "already", components: ["已", "经"], story: "Already passed through", commonWords: ["已经排好", "已经完成", "已经存在"], svgAnimation: "already" },
-      "说明": { pinyin: "shuō míng", meaning: "indicate, explain", components: ["说", "明"], story: "Speaking clearly to explain", commonWords: ["说明文档", "说明书", "这说明"], svgAnimation: "explain" },
-      "优化": { pinyin: "yōu huà", meaning: "optimize, optimization", components: ["优", "化"], story: "Transforming into something better", commonWords: ["优化算法", "性能优化", "代码优化"], svgAnimation: "optimize" },
-      "算法": { pinyin: "suàn fǎ", meaning: "algorithm", components: ["算", "法"], story: "Calculation method — the recipe for computation", commonWords: ["排序算法", "查找算法", "算法复杂度"], svgAnimation: "algorithm" }
-    };
+计算机算法是以一步接一步的方式来详细描述计算机如何将输入转化为所要求的输出的过程，或者说，算法是对计算机上执行的计算过程的具体描述。（以上内容摘抄自百度百科），简单点说计算机算法就是将输入转化为所要求的输出过程。`;
 
-    // ===== ARTICLE CONTENT =====
-    const ARTICLE = {
-      title: "冒泡排序",
-      breadcrumb: [
-        { text: "Rust算法教程", url: "#" },
-        { text: "排序", url: "#" },
-        { text: "冒泡排序", url: null }
-      ],
-      sections: [
-        {
-          id: "intro",
-          title: "冒泡排序",
-          content: `
-            <p><strong>冒泡排序</strong> 是一种简单的<strong>排序算法</strong>。它的工作原理是：重复地遍历要排序的<strong>数组</strong>，每次比较相邻的两个<strong>元素</strong>，如果它们的顺序错误就把它们<strong>交换</strong>过来。</p>
-            <p>遍历<strong>数组</strong>的过程会重复进行，直到没有再需要<strong>交换</strong>，也就是<strong>数组</strong>已经<strong>有序</strong>。这个<strong>算法</strong>的名字由来是因为越大的<strong>元素</strong>会像<strong>气泡</strong>一样慢慢“<strong>冒泡</strong>”到<strong>数组</strong>的末端。</p>
-          `
-        },
-        {
-          id: "implementation",
-          title: "Rust 实现",
-          content: `
-            <pre><code><span class="keyword">pub fn</span> <span class="function">bubble_sort</span><span class="keyword"><T: PartialOrd></span>(<span class="keyword">arr</span>: <span class="keyword">&mut</span> [<span class="keyword">T</span>]) {
-    <span class="keyword">if</span> <span class="keyword">arr</span>.<span class="function">len</span>() <span class="keyword"><=</span> <span class="number">1</span> {
-        <span class="keyword">return</span>;
-    }
+        // Single Character Dictionary Entry Fallbacks & Database
+        const singleCharDB = {
+            "算": { pinyin: "suàn", english: "Calculate; compute; figure", radical: "竹 (Bamboo)", emoji: "🧮" },
+            "法": { pinyin: "fǎ", english: "Method; way; law; rule", radical: "氵 (Water)", emoji: "⚖️" },
+            "计": { pinyin: "jì", english: "Count; compute; plan", radical: "讠 (Speech)", emoji: "⏱️" },
+            "机": { pinyin: "jī", english: "Machine; trigger; opportunity", radical: "木 (Wood)", emoji: "⚙️" },
+            "代": { pinyin: "dài", english: "Replace; code; era", radical: "亻 (Man)", emoji: "🔄" },
+            "码": { pinyin: "mǎ", english: "Number; symbol; code", radical: "石 (Stone)", emoji: "🏷️" },
+            "神": { pinyin: "shén", english: "Spirit; god; mystical; divine", radical: "礻 (Spirit)", emoji: "✨" },
+            "秘": { pinyin: "mì", english: "Secret; mysterious; confidential", radical: "禾 (Grain)", emoji: "🔮" },
+            "数": { pinyin: "shù", english: "Number; figure; count", radical: "攵 (Rapping)", emoji: "🔢" },
+            "据": { pinyin: "jù", english: "According to; proof; base", radical: "扌 (Hand)", emoji: "📄" },
+            "输": { pinyin: "shū", english: "Transport; convey; enter", radical: "车 (Cart)", emoji: "🚚" },
+            "入": { pinyin: "rù", english: "Enter; input; join", radical: "入 (Enter)", emoji: "📥" },
+            "出": { pinyin: "chū", english: "Exit; output; produce", radical: "凵 (Container)", emoji: "📤" },
+            "包": { pinyin: "bāo", english: "Wrap; package; bundle", radical: "勹 (Wrap)", emoji: "📦" },
+            "装": { pinyin: "zhuāng", english: "Dress; equip; install; pack", radical: "衣 (Clothes)", emoji: "👔" },
+            "过": { pinyin: "guò", english: "Pass; cross; process", radical: "辶 (Walk)", emoji: "🚶" },
+            "程": { pinyin: "chéng", english: "Rule; order; journey", radical: "禾 (Grain)", emoji: "📐" }
+        };
 
-    <span class="keyword">let</span> <span class="keyword">size</span> = <span class="keyword">arr</span>.<span class="function">len</span>();
-    <span class="keyword">for</span> <span class="keyword">i</span> <span class="keyword">in</span> <span class="number">0</span>..(<span class="keyword">size</span> <span class="keyword">-</span> <span class="number">1</span>) {
-        <span class="comment">// 标记当前循环是否发生元素交换</span>
-        <span class="keyword">let mut</span> <span class="keyword">swapped</span> = <span class="keyword">false</span>;
+        // Phrase / Word Dictionary
+        const dictionaryDB = {
+            "算法": {
+                pinyin: "suàn fǎ",
+                pos: "Noun",
+                english: "Algorithm; calculation procedure.",
+                emoji: "🧮",
+                svgType: "gears",
+                compounds: [
+                    { word: "计算机算法", pinyin: "jì suàn jī suàn fǎ", english: "Computer Algorithm" },
+                    { word: "排序算法", pinyin: "pái xù suàn fǎ", english: "Sorting Algorithm" }
+                ],
+                context: "指解题方案的准确而完整的描述，是一系列解决问题的清晰指令。"
+            },
+            "计算机": {
+                pinyin: "jì suàn jī",
+                pos: "Noun",
+                english: "Computer; electronic calculating machine.",
+                emoji: "💻",
+                svgType: "computer",
+                compounds: [
+                    { word: "计算机科学", pinyin: "jì suàn jī kē xué", english: "Computer Science" },
+                    { word: "微型计算机", pinyin: "wēi xíng jì suàn jī", english: "Microcomputer" }
+                ],
+                context: "一种能够按照程序运行，自动、高速处理海量数据的现代智能电子设备。"
+            },
+            "神秘": {
+                pinyin: "shén mì",
+                pos: "Adjective",
+                english: "Mysterious; mystical; secret.",
+                emoji: "🔮",
+                svgType: "magic",
+                compounds: [
+                    { word: "神秘感", pinyin: "shén mì gǎn", english: "Sense of Mystery" },
+                    { word: "神秘莫测", pinyin: "shén mì mò cè", english: "Unfathomable" }
+                ],
+                context: "难以猜测或理解的，具有隐秘特质的事物。"
+            },
+            "代码": {
+                pinyin: "dài mǎ",
+                pos: "Noun",
+                english: "Source Code; programming instructions.",
+                emoji: "📜",
+                svgType: "code",
+                compounds: [
+                    { word: "源代码", pinyin: "yuán dài mǎ", english: "Source Code" },
+                    { word: "编写代码", pinyin: "biān xiě dài mǎ", english: "Write Code" }
+                ],
+                context: "程序员用特定编程语言编写的指令集合。"
+            },
+            "数据": {
+                pinyin: "shù jù",
+                pos: "Noun",
+                english: "Data; information; numerical values.",
+                emoji: "📊",
+                svgType: "data",
+                compounds: [
+                    { word: "数据库", pinyin: "shù jù kù", english: "Database" },
+                    { word: "大数据", pinyin: "dà shù jù", english: "Big Data" }
+                ],
+                context: "对事实、概念或指令的一种特殊表达形式。"
+            },
+            "输入": {
+                pinyin: "shū rù",
+                pos: "Verb / Noun",
+                english: "Input; import; enter data.",
+                emoji: "📥",
+                svgType: "io",
+                compounds: [
+                    { word: "输入法", pinyin: "shū rù fǎ", english: "Input Method (IME)" }
+                ],
+                context: "把数据或信号送入计算机或其它系统中。"
+            },
+            "输出": {
+                pinyin: "shū chū",
+                pos: "Verb / Noun",
+                english: "Output; export; result produced.",
+                emoji: "📤",
+                svgType: "io",
+                compounds: [
+                    { word: "输出设备", pinyin: "shū chū shè bèi", english: "Output Device" }
+                ],
+                context: "把计算机处理好的数据传递给外部设备或使用者。"
+            },
+            "包装": {
+                pinyin: "bāo zhuāng",
+                pos: "Verb / Noun",
+                english: "Package; wrap up; encapsulate.",
+                emoji: "📦",
+                svgType: "package",
+                compounds: [
+                    { word: "库包装", pinyin: "kù bāo zhuāng", english: "Library Encapsulation" }
+                ],
+                context: "将底层逻辑封装起来提供简单调用的过程。"
+            },
+            "过程": {
+                pinyin: "guò chéng",
+                pos: "Noun",
+                english: "Process; procedure; course.",
+                emoji: "🔄",
+                svgType: "gears",
+                compounds: [
+                    { word: "执行过程", pinyin: "zhí xíng guò chéng", english: "Execution Process" }
+                ],
+                context: "事物发展所经过的程序或阶段。"
+            }
+        };
 
-        <span class="comment">// 最后i个元素已经排好了顺序</span>
-        <span class="keyword">for</span> <span class="keyword">j</span> <span class="keyword">in</span> <span class="number">1</span>..(<span class="keyword">size</span> <span class="keyword">-</span> <span class="keyword">i</span>) {
-            <span class="keyword">if</span> <span class="keyword">arr</span>[<span class="keyword">j</span> <span class="keyword">-</span> <span class="number">1</span>] <span class="keyword">></span> <span class="keyword">arr</span>[<span class="keyword">j</span>] {
-                <span class="keyword">arr</span>.<span class="function">swap</span>(<span class="keyword">j</span> <span class="keyword">-</span> <span class="number">1</span>, <span class="keyword">j</span>);
-                <span class="keyword">swapped</span> = <span class="keyword">true</span>;
+        // App States
+        let showPinyin = false;
+        let activeSelectionMode = 'word'; // 'word' or 'char'
+        let activeWordSpan = null;
+        let activeCharSpan = null;
+
+        // SVG Animation Generator
+        function generateAnimatedSVG(type) {
+            switch(type) {
+                case 'gears':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <g class="anim-spin" style="transform-origin: 38px 38px;">
+                            <circle cx="38" cy="38" r="18" stroke="#3b82f6" stroke-width="4" stroke-dasharray="6 4"/>
+                            <circle cx="38" cy="38" r="8" fill="#3b82f6" opacity="0.4"/>
+                        </g>
+                        <g class="anim-spin" style="transform-origin: 64px 64px; animation-direction: reverse; animation-duration: 8s;">
+                            <circle cx="64" cy="64" r="14" stroke="#8b5cf6" stroke-width="4" stroke-dasharray="5 3"/>
+                            <circle cx="64" cy="64" r="6" fill="#8b5cf6" opacity="0.4"/>
+                        </g>
+                    </svg>`;
+                case 'computer':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="20" y="22" width="60" height="42" rx="6" stroke="#3b82f6" stroke-width="4" fill="#151720"/>
+                        <rect x="26" y="28" width="48" height="30" rx="3" fill="#0e0f14"/>
+                        <path d="M32 38 H52 M32 46 H44" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" class="anim-pulse"/>
+                        <path d="M15 72 H85 L80 64 H20 L15 72 Z" fill="#24283b" stroke="#3b82f6" stroke-width="2"/>
+                    </svg>`;
+                case 'code':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="15" y="15" width="70" height="70" rx="10" stroke="#8b5cf6" stroke-width="3" fill="#151720"/>
+                        <path d="M30 35 L20 45 L30 55" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M70 35 L80 45 L70 55" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="55" y1="32" x2="45" y2="58" stroke="#06b6d4" stroke-width="4" stroke-linecap="round"/>
+                    </svg>`;
+                case 'magic':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="28" stroke="#8b5cf6" stroke-width="3" fill="#1e1b4b" class="anim-pulse"/>
+                        <circle cx="50" cy="50" r="18" fill="#a78bfa" opacity="0.3" class="anim-float"/>
+                        <path d="M50 12 V22 M50 78 V88 M12 50 H22 M78 50 H88" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" class="anim-spin"/>
+                    </svg>`;
+                case 'data':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="22" y="55" width="12" height="30" rx="3" fill="#3b82f6" class="anim-float" style="animation-delay: 0s;"/>
+                        <rect x="44" y="35" width="12" height="50" rx="3" fill="#8b5cf6" class="anim-float" style="animation-delay: 0.3s;"/>
+                        <rect x="66" y="20" width="12" height="65" rx="3" fill="#06b6d4" class="anim-float" style="animation-delay: 0.6s;"/>
+                    </svg>`;
+                case 'io':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M20 38 H65 M65 38 L52 26 M65 38 L52 50" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="anim-pulse"/>
+                        <path d="M80 62 H35 M35 62 L48 50 M35 62 L48 74" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="anim-pulse" style="animation-delay: 0.5s;"/>
+                    </svg>`;
+                case 'package':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M50 18 L82 34 L50 50 L18 34 Z" fill="#24283b" stroke="#3b82f6" stroke-width="3" class="anim-float"/>
+                        <path d="M18 34 V66 L50 82 V50 Z" fill="#1c1f2e" stroke="#3b82f6" stroke-width="3"/>
+                        <path d="M82 34 V66 L50 82 V50 Z" fill="#151720" stroke="#8b5cf6" stroke-width="3"/>
+                    </svg>`;
+                default:
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="28" stroke="#3b82f6" stroke-width="3" stroke-dasharray="6 4" class="anim-spin"/>
+                        <circle cx="50" cy="50" r="10" fill="#8b5cf6" class="anim-pulse"/>
+                    </svg>`;
             }
         }
 
-        <span class="comment">// 如果当前循环没有发生元素交换，说明数组已经有序</span>
-        <span class="keyword">if</span> <span class="keyword">!</span><span class="keyword">swapped</span> {
-            <span class="keyword">break</span>;
+        // Render Passage Content with Nested Character Containers
+        function renderReadingContent(rawText) {
+            const container = document.getElementById('readingContainer');
+            container.innerHTML = '';
+
+            const paragraphs = rawText.split('\n');
+
+            paragraphs.forEach(pText => {
+                if (!pText.trim()) return;
+
+                const pElem = document.createElement('p');
+                pElem.className = 'leading-relaxed tracking-wide font-normal mb-4';
+
+                let idx = 0;
+                while (idx < pText.length) {
+                    let matchedPhrase = null;
+
+                    // Match multi-character words from dictionary
+                    for (let len = 4; len >= 2; len--) {
+                        const sub = pText.substr(idx, len);
+                        if (dictionaryDB[sub]) {
+                            matchedPhrase = sub;
+                            break;
+                        }
+                    }
+
+                    if (matchedPhrase) {
+                        // Create Word Group Container
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = 'hz-word-group';
+                        wordSpan.dataset.word = matchedPhrase;
+
+                        // Fill with individual characters
+                        for (let cIdx = 0; cIdx < matchedPhrase.length; cIdx++) {
+                            const char = matchedPhrase[cIdx];
+                            const charSpan = createCharSpan(char, matchedPhrase);
+                            wordSpan.appendChild(charSpan);
+                        }
+
+                        // Word-level click listener
+                        wordSpan.addEventListener('click', (e) => {
+                            if (activeSelectionMode === 'word') {
+                                e.stopPropagation();
+                                clearActiveHighlights();
+                                wordSpan.classList.add('word-active');
+                                activeWordSpan = wordSpan;
+                                updateDictionaryPanel(matchedPhrase, null);
+                            }
+                        });
+
+                        pElem.appendChild(wordSpan);
+                        idx += matchedPhrase.length;
+                    } else {
+                        const char = pText[idx];
+                        if (/[\s，。、（）！：；“”‘’]/.test(char)) {
+                            const span = document.createElement('span');
+                            span.textContent = char;
+                            span.className = 'text-slate-500 select-none mx-0.5';
+                            pElem.appendChild(span);
+                        } else {
+                            // Standalone Character Span
+                            const charSpan = createCharSpan(char, null);
+                            pElem.appendChild(charSpan);
+                        }
+                        idx++;
+                    }
+                }
+
+                container.appendChild(pElem);
+            });
         }
-    }
-}</code></pre>
-          `
-        },
-        {
-          id: "explanation",
-          title: "代码讲解",
-          content: `
-            <h3>泛型参数</h3>
-            <p><code>T: PartialOrd</code> 表示这是一个<strong>泛型</strong><strong>函数</strong>，<code>T</code> 可以是任何实现了 <code>PartialOrd</code> trait（可比较）的类型。</p>
 
-            <h3>早期返回</h3>
-            <p><code>if arr.len() <= 1 { return; }</code> — 如果<strong>数组</strong><strong>长度</strong>为 0 或 1，直接返回，无需<strong>排序</strong>。</p>
+        // Helper to Create Individual Character Element
+        function createCharSpan(char, parentWord) {
+            const span = document.createElement('span');
+            span.className = 'hz-char';
+            span.dataset.char = char;
 
-            <h3>外层循环</h3>
-            <p><code>for i in 0..(size - 1)</code> — 外层<strong>循环</strong>控制遍历的轮数，最多需要 <code>size - 1</code> 轮。</p>
+            const charInfo = singleCharDB[char] || { pinyin: "pīn" };
 
-            <h3>标记变量</h3>
-            <p><code>let mut swapped = false</code> — 用一个<strong>标记</strong>变量记录本轮是否<strong>发生</strong>了<strong>交换</strong>。这是一个<strong>优化</strong>：如果某一轮完全没有<strong>交换</strong>，说明<strong>数组</strong>已经<strong>有序</strong>，可以提前结束。</p>
-
-            <h3>内层循环</h3>
-            <p><code>for j in 1..(size - i)</code> — 内层<strong>循环</strong>进行相邻<strong>元素</strong>比较。注意范围是 <code>size - i</code>，因为<strong>最后</strong> <code>i</code> 个<strong>元素</strong>已经<strong>排好</strong>顺序了，不需要再比较。</p>
-
-            <h3>比较与交换</h3>
-            <p><code>if arr[j - 1] > arr[j] { arr.swap(j - 1, j); swapped = true; }</code> — 如果前一个<strong>元素</strong>大于后一个，就<strong>交换</strong>它们，并把<strong>标记</strong>设为 true。</p>
-
-            <h3>提前退出</h3>
-            <p><code>if !swapped { break; }</code> — 如果本轮没<strong>发生</strong>任何<strong>交换</strong>，<strong>说明</strong><strong>数组</strong>已经<strong>有序</strong>，<strong>跳出</strong>外层<strong>循环</strong>。</p>
-          `
-        },
-        {
-          id: "complexity",
-          title: "复杂度分析",
-          content: `
-            <p><strong>时间复杂度</strong>：</p>
-            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
-              <li>最好情况：O(n) — 数组已经<strong>有序</strong>，只需一轮遍历</li>
-              <li>最坏情况：O(n²) — 数组完全逆序</li>
-              <li>平均情况：O(n²)</li>
-            </ul>
-            <p><strong>空间复杂度</strong>：O(1) — 只使用常数额外空间</p>
-            <p><strong>稳定性</strong>：稳定排序 — 相等<strong>元素</strong>不会改变相对顺序</p>
-          `
-        }
-      ]
-    };
-
-    // ===== NAVIGATION DATA =====
-    const NAV = [
-      { type: 'chapter', title: '1. 排序', expanded: true, children: [
-        { title: '1.1. 冒泡排序', active: true },
-        { title: '1.2. 桶排序' },
-        { title: '1.3. 鸡尾酒排序' },
-        { title: '1.4. 梳排序' },
-        { title: '1.5. 计数排序' },
-        { title: '1.6. 地精排序' },
-        { title: '1.7. 堆排序' },
-        { title: '1.8. 插入排序' },
-        { title: '1.9. 归并排序' },
-        { title: '1.10. 奇偶排序' },
-        { title: '1.11. 快速排序' },
-        { title: '1.12. 基数排序' },
-        { title: '1.13. 选择排序' },
-        { title: '1.14. 希尔排序' },
-        { title: '1.15. 臭皮匠排序' },
-      ]},
-      { type: 'chapter', title: '2. 字符串', children: [
-        { title: '2.1. 逆序倒转' },
-        { title: '2.2. 数据转换算法' },
-        { title: '2.3. KMP算法' },
-        { title: '2.4. 马拉车算法' },
-        { title: '2.5. Rabin Karp算法' },
-      ]},
-      { type: 'chapter', title: '3. 查找算法', children: [
-        { title: '3.1. 二分查找' },
-        { title: '3.2. 递归二分查找' },
-        { title: '3.3. 查找第K小的元素' },
-        { title: '3.4. 线性搜索' },
-      ]},
-      { type: 'chapter', title: '4. 图论', children: [
-        { title: '4.1. 最短路径-Bellman Ford' },
-        { title: '4.2. 最短路径-Dijkstra' },
-        { title: '4.3. 深度优先搜索' },
-        { title: '4.4. 广度优先搜索' },
-      ]},
-      { type: 'chapter', title: '5. 动态规划', children: [
-        { title: '5.1. 斐波那契' },
-        { title: '5.2. 找钱' },
-        { title: '5.3. 最小编辑距离' },
-      ]},
-      { type: 'chapter', title: '10. 数据结构', children: [
-        { title: '10.1. B树' },
-        { title: '10.2. 二叉树' },
-        { title: '10.3. AVL树' },
-        { title: '10.4. 链表' },
-        { title: '10.5. 堆' },
-        { title: '10.6. 栈' },
-        { title: '10.7. 队列' },
-        { title: '10.8. Trie' },
-      ]},
-    ];
-
-    // ===== UTILITIES =====
-    function escapeHtml(text) {
-      if (!text) return '';
-      return String(text).replace(/[&<>"']/g, m => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m]));
-    }
-
-    // Tokenize Chinese text and wrap known words in clickable spans
-    function processChineseText(html) {
-      // Sort dictionary keys by length (longest first) to match compounds first
-      const keys = Object.keys(DICTIONARY).sort((a, b) => b.length - a.length);
-      let result = html;
-
-      // First, protect existing HTML tags
-      const tagPlaceholder = '___TAG_PLACEHOLDER___';
-      const tags = [];
-      result = result.replace(/<[^>]+>/g, (match) => {
-        tags.push(match);
-        return tagPlaceholder + (tags.length - 1) + tagPlaceholder;
-      });
-
-      // Now process text content - find Chinese sequences
-      const chineseRegex = /[\u4e00-\u9fff]+/g;
-      result = result.replace(chineseRegex, (match) => {
-        // Try to match longest dictionary entries first
-        let processed = match;
-        for (const key of keys) {
-          if (key.length > 1 && key.length <= match.length) {
-            const regex = new RegExp(escapeRegExp(key), 'g');
-            if (regex.test(match)) {
-              processed = processed.replace(regex, `<span class="chinese-word" data-word="${escapeHtml(key)}">${key}</span>`);
+            if (showPinyin && charInfo.pinyin) {
+                span.innerHTML = `<ruby class="pinyin-ruby">${char}<rt>${charInfo.pinyin}</rt></ruby>`;
+            } else {
+                span.textContent = char;
             }
-          }
+
+            // Click Handler for Character
+            span.addEventListener('click', (e) => {
+                if (activeSelectionMode === 'char' || !parentWord) {
+                    e.stopPropagation();
+                    clearActiveHighlights();
+                    span.classList.add('char-active');
+                    activeCharSpan = span;
+
+                    // Display individual character breakdown
+                    updateDictionaryPanel(parentWord || char, char);
+                }
+            });
+
+            return span;
         }
-        // Then handle single characters not part of compounds
-        for (const key of keys) {
-          if (key.length === 1) {
-            const regex = new RegExp(escapeRegExp(key), 'g');
-            if (regex.test(processed) && !processed.includes(`data-word="${escapeHtml(key)}"`)) {
-              processed = processed.replace(regex, `<span class="chinese-word" data-word="${escapeHtml(key)}">${key}</span>`);
+
+        function clearActiveHighlights() {
+            document.querySelectorAll('.hz-word-group.word-active').forEach(el => el.classList.remove('word-active'));
+            document.querySelectorAll('.hz-char.char-active').forEach(el => el.classList.remove('char-active'));
+        }
+
+        // Update Dictionary & Breakdown Display
+        function updateDictionaryPanel(phraseOrChar, focusedChar) {
+            const entry = dictionaryDB[phraseOrChar] || {
+                pinyin: (singleCharDB[phraseOrChar] || {}).pinyin || "pīn yīn",
+                pos: phraseOrChar.length > 1 ? "Compound Phrase" : "Hanzi Character",
+                english: (singleCharDB[phraseOrChar] || {}).english || `Chinese term: "${phraseOrChar}"`,
+                emoji: (singleCharDB[phraseOrChar] || {}).emoji || "🔤",
+                svgType: "default",
+                compounds: [],
+                context: `Selected item "${phraseOrChar}" from reading text.`
+            };
+
+            const targetHanzi = focusedChar || phraseOrChar;
+            const displayEntry = focusedChar ? (singleCharDB[focusedChar] || {}) : entry;
+
+            document.getElementById('targetHanzi').textContent = targetHanzi;
+            document.getElementById('targetPinyin').textContent = focusedChar ? (displayEntry.pinyin || '') : entry.pinyin;
+            document.getElementById('targetPos').textContent = focusedChar ? "Single Character" : entry.pos;
+            document.getElementById('targetEnglish').textContent = focusedChar ? (displayEntry.english || 'Character breakdown') : entry.english;
+            document.getElementById('targetEmoji').textContent = focusedChar ? (displayEntry.emoji || '🔤') : entry.emoji;
+            document.getElementById('contextSentence').textContent = entry.context || `Usage in context.`;
+
+            // Render Animated SVG
+            const svgContainer = document.getElementById('svgContainer');
+            svgContainer.innerHTML = generateAnimatedSVG(entry.svgType || 'default');
+            document.getElementById('svgCaption').textContent = `Visual Concept: ${targetHanzi}`;
+
+            // Render Individual Character Breakdown Cards
+            const charContainer = document.getElementById('charBreakdownContainer');
+            charContainer.innerHTML = '';
+
+            const charactersToBreak = phraseOrChar.split('');
+            charactersToBreak.forEach(c => {
+                const info = singleCharDB[c] || { pinyin: 'pīn', english: 'Character unit', radical: 'Standard' };
+                const isSelected = (focusedChar === c);
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border transition cursor-pointer flex items-center justify-between ${
+                    isSelected 
+                    ? 'bg-blue-600/20 border-blue-500 shadow-md' 
+                    : 'bg-panelBg/80 border-slate-800 hover:border-slate-700'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl font-bold text-white">${c}</span>
+                        <div>
+                            <span class="text-xs text-purple-400 font-mono block">${info.pinyin}</span>
+                            <span class="text-[11px] text-slate-400 line-clamp-1">${info.english}</span>
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">${info.radical || ''}</span>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    updateDictionaryPanel(phraseOrChar, c);
+                });
+
+                charContainer.appendChild(card);
+            });
+
+            // Render Compound Words List
+            const compoundsList = document.getElementById('compoundWordsList');
+            compoundsList.innerHTML = '';
+
+            if (entry.compounds && entry.compounds.length > 0) {
+                entry.compounds.forEach(c => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-2.5 rounded-xl bg-panelBg/70 border border-slate-800 hover:border-slate-700 transition cursor-pointer';
+                    item.innerHTML = `
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold text-slate-100 text-xs">${c.word}</span>
+                            <span class="text-[10px] text-purple-400 font-mono">${c.pinyin}</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 truncate max-w-[160px]">${c.english}</span>
+                    `;
+                    item.addEventListener('click', () => updateDictionaryPanel(c.word, null));
+                    compoundsList.appendChild(item);
+                });
+            } else {
+                compoundsList.innerHTML = `<span class="text-xs text-slate-500 italic">No additional compounds listed.</span>`;
             }
-          }
         }
-        return processed;
-      });
 
-      // Restore tags
-      tags.forEach((tag, i) => {
-        result = result.replace(tagPlaceholder + i + tagPlaceholder, tag);
-      });
+        // Native Web Speech API Audio
+        function speakChinese(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
 
-      return result;
-    }
-
-    function escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    // ===== RENDER FUNCTIONS =====
-    function renderNav() {
-      const container = document.getElementById('nav-list');
-      container.innerHTML = NAV.map(chapter => `
-        <li class="nav-item">
-          <span class="nav-link chapter">${escapeHtml(chapter.title)}</span>
-          ${chapter.children ? `<ul style="margin-top:0.25rem;">${chapter.children.map(child => `
-            <li class="nav-item">
-              <a class="nav-link section ${child.active ? 'active' : ''}" href="#">${escapeHtml(child.title)}</a>
-            </li>
-          `).join('')}</ul>` : ''}
-        </li>
-      `).join('');
-    }
-
-    function renderBreadcrumb() {
-      const container = document.getElementById('breadcrumb');
-      container.innerHTML = ARTICLE.breadcrumb.map((item, i) => `
-        ${i > 0 ? '<span style="margin:0 0.5rem;color:#30363d;">/</span>' : ''}
-        ${item.url ? `<a href="${item.url}">${escapeHtml(item.text)}</a>` : `<span>${escapeHtml(item.text)}</span>`}
-      `).join('');
-    }
-
-    function renderContent() {
-      const container = document.getElementById('content');
-      container.innerHTML = ARTICLE.sections.map(section => `
-        <section id="${section.id}">
-          <h2>${escapeHtml(section.title)}</h2>
-          ${processChineseText(section.content)}
-        </section>
-      `).join('');
-
-      document.getElementById('article-title').textContent = ARTICLE.title;
-
-      // Attach click handlers to Chinese words
-      document.querySelectorAll('.chinese-word').forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const word = el.dataset.word;
-          selectWord(word, el);
+        // Highlight Selection Event Listener
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            const text = selection.toString().trim();
+            if (text && text.length <= 10 && /^[\u4e00-\u9fa5]+$/.test(text)) {
+                updateDictionaryPanel(text, null);
+            }
         });
-      });
-    }
 
-    let selectedEl = null;
-    function selectWord(word, el) {
-      if (selectedEl) selectedEl.classList.remove('selected');
-      el.classList.add('selected');
-      selectedEl = el;
-      renderDetail(word);
-      // On mobile, open detail panel
-      if (window.innerWidth <= 1100) {
-        document.getElementById('detail-panel').classList.add('open');
-      }
-    }
+        // App Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            renderReadingContent(defaultSampleText);
+            updateDictionaryPanel("算法", null);
 
-    function renderDetail(word) {
-      const info = DICTIONARY[word];
-      const container = document.getElementById('detail-content');
-      if (!info) {
-        container.innerHTML = `<div class="detail-empty">No dictionary entry for "${escapeHtml(word)}"</div>`;
-        return;
-      }
-      const isCompound = word.length > 1;
-      container.innerHTML = `
-        <div class="detail-title">${escapeHtml(word)}</div>
-        <div class="detail-pinyin">${escapeHtml(info.pinyin)}</div>
-        <span class="detail-type">${isCompound ? 'Compound Word' : 'Single Character'}</span>
-        <div class="detail-section">
-          <h4>Meaning</h4>
-          <div class="detail-meaning">${escapeHtml(info.meaning)}</div>
-        </div>
-        ${info.components ? `
-        <div class="detail-section">
-          <h4>Components</h4>
-          <div class="components-list">
-            ${info.components.map(c => `<span class="component-tag">${escapeHtml(c)}</span>`).join('')}
-          </div>
-        </div>` : ''}
-        ${info.story ? `
-        <div class="detail-section">
-          <h4>Mnemonic Story</h4>
-          <div class="story">${escapeHtml(info.story)}</div>
-        </div>` : ''}
-        ${info.commonWords && info.commonWords.length ? `
-        <div class="detail-section">
-          <h4>Common Words</h4>
-          <div class="common-words">
-            ${info.commonWords.map(w => `<span class="word-tag" data-word="${escapeHtml(w)}">${escapeHtml(w)}</span>`).join('')}
-          </div>
-        </div>` : ''}
-        ${info.svgAnimation ? `
-        <div class="detail-section">
-          <h4>SVG Animation</h4>
-          <div class="animation-placeholder">
-            <span class="anim-name">${escapeHtml(info.svgAnimation)}</span>
-            Animation key only — not yet implemented
-          </div>
-        </div>` : ''}
-      `;
+            // Selection Mode Buttons
+            const modeWordBtn = document.getElementById('modeWordBtn');
+            const modeCharBtn = document.getElementById('modeCharBtn');
 
-      // Make common words clickable
-      container.querySelectorAll('.word-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-          const w = tag.dataset.word;
-          const el = document.querySelector(`.chinese-word[data-word="${CSS.escape(w)}"]`);
-          if (el) selectWord(w, el);
-          else renderDetail(w);
+            modeWordBtn.addEventListener('click', () => {
+                activeSelectionMode = 'word';
+                modeWordBtn.className = "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition flex items-center gap-1.5";
+                modeCharBtn.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+            });
+
+            modeCharBtn.addEventListener('click', () => {
+                activeSelectionMode = 'char';
+                modeCharBtn.className = "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition flex items-center gap-1.5";
+                modeWordBtn.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+            });
+
+            // Toggle Pinyin
+            document.getElementById('togglePinyinBtn').addEventListener('click', () => {
+                showPinyin = !showPinyin;
+                document.getElementById('pinyinBtnText').textContent = showPinyin ? "Hide Pinyin" : "Show Pinyin";
+                const currentText = document.getElementById('customTextInput').value || defaultSampleText;
+                renderReadingContent(currentText);
+            });
+
+            // Text Input Controls
+            const editorModal = document.getElementById('editorModal');
+            document.getElementById('editContentBtn').addEventListener('click', () => editorModal.classList.remove('hidden'));
+            document.getElementById('closeEditorBtn').addEventListener('click', () => editorModal.classList.add('hidden'));
+
+            document.getElementById('loadTextBtn').addEventListener('click', () => {
+                const text = document.getElementById('customTextInput').value.trim();
+                if (text) {
+                    renderReadingContent(text);
+                    editorModal.classList.add('hidden');
+                }
+            });
+
+            document.getElementById('resetDefaultBtn').addEventListener('click', () => {
+                document.getElementById('customTextInput').value = defaultSampleText;
+                renderReadingContent(defaultSampleText);
+                editorModal.classList.add('hidden');
+            });
+
+            // Dictionary Search
+            const searchInput = document.getElementById('dictionarySearch');
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const query = searchInput.value.trim();
+                    if (query) updateDictionaryPanel(query, null);
+                }
+            });
+
+            // TTS Speech Buttons
+            document.getElementById('ttsButton').addEventListener('click', () => {
+                const target = document.getElementById('targetHanzi').textContent;
+                speakChinese(target);
+            });
+
+            document.getElementById('speakFullBtn').addEventListener('click', () => {
+                const text = window.getSelection().toString() || defaultSampleText;
+                speakChinese(text);
+            });
         });
-      });
-    }
-
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('open');
-    }
-    function toggleDetail() {
-      document.getElementById('detail-panel').classList.toggle('open');
-    }
-
-    // ===== INIT =====
-    renderNav();
-    renderBreadcrumb();
-    renderContent();
-  </script>
+    </script>
 </body>
 </html>
