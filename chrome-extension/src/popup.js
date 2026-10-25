@@ -1,4 +1,5 @@
 let allData = null;
+let bgPort = null;
 
 async function loadData() {
   try {
@@ -6,10 +7,56 @@ async function loadData() {
     const json = await res.json();
     allData = json.characters;
     render();
+    checkPendingLookup();
   } catch (e) {
     console.error('Failed to load data:', e);
     document.getElementById('singles-grid').innerHTML = '<div style="grid-column:span 2;text-align:center;color:#8b949e;padding:20px;">Failed to load data</div>';
   }
+}
+
+// Connect to background for real-time messages
+function connectBackground() {
+  bgPort = chrome.runtime.connect({ name: 'popup' });
+  bgPort.onMessage.addListener((msg) => {
+    if (msg.type === 'LOOKUP' && msg.text) {
+      document.getElementById('search').value = msg.text;
+      render(msg.text);
+      // If exact match, show modal
+      const match = findExactMatch(msg.text);
+      if (match) showModal(match.char, match.info);
+    }
+  });
+  bgPort.onDisconnect.addListener(() => { bgPort = null; });
+}
+
+async function checkPendingLookup() {
+  try {
+    const { pendingLookup } = await chrome.storage.session.get('pendingLookup');
+    if (pendingLookup) {
+      await chrome.storage.session.remove('pendingLookup');
+      document.getElementById('search').value = pendingLookup.text;
+      render(pendingLookup.text);
+      const match = findExactMatch(pendingLookup.text);
+      if (match) showModal(match.char, match.info);
+    }
+  } catch (e) {
+    console.error('Pending lookup error:', e);
+  }
+}
+
+function findExactMatch(text) {
+  if (!allData) return null;
+  // Try exact character match first
+  if (text.length === 1 && allData[text]) return { char: text, info: allData[text] };
+  // Try compound match
+  if (allData[text]) return { char: text, info: allData[text] };
+  // Try pinyin match
+  for (const [char, info] of Object.entries(allData)) {
+    if (info.pinyin.toLowerCase() === text.toLowerCase()) {
+      return { char, info };
+    }
+  }
+  return null;
 }
 
 function render(filter = '') {
@@ -65,7 +112,7 @@ function escapeHtml(str) {
     .replace(/&/g, '&')
     .replace(/</g, '<')
     .replace(/>/g, '>')
-    .replace(/"/g, '"');
+    .replace(/\"/g, '"');
 }
 
 function showModalFromCard(btn) {
@@ -95,4 +142,6 @@ document.getElementById('modal').addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
+// Init
+connectBackground();
 loadData();
