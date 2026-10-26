@@ -222,7 +222,7 @@
             <!-- Scrollable Analysis Area -->
             <div id="dictionaryDisplay" class="flex-1 overflow-y-auto p-6 space-y-6">
                 <!-- Main Compound / Character Card -->
-                <div class="bg-cardBg rounded-2xl p-6 border border-slate-700/50 shadow-2xl relative overflow-hidden">
+                <div id="singleEntryCard" class="bg-cardBg rounded-2xl p-6 border border-slate-700/50 shadow-2xl relative overflow-hidden">
                     
                     <!-- Glow Accents -->
                     <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -293,6 +293,9 @@
                     </div>
 
                 </div>
+
+                <!-- Multi-Character Selection View (highlight up to 10 characters) -->
+                <div id="multiSelectSection" class="hidden space-y-4"></div>
             </div>
         </section>
     </main>
@@ -1112,6 +1115,10 @@
 
         // Update Dictionary & Breakdown Display
         function updateDictionaryPanel(phraseOrChar, focusedChar) {
+            // Restore single-entry view (exits multi-selection view)
+            document.getElementById('singleEntryCard').classList.remove('hidden');
+            document.getElementById('multiSelectSection').classList.add('hidden');
+
             const entry = dictionaryDB[phraseOrChar] || {
                 pinyin: (singleCharDB[phraseOrChar] || {}).pinyin || (wordDefinitions[phraseOrChar] || {}).pinyin || "pīn yīn",
                 pos: phraseOrChar.length > 1 ? "Compound Phrase" : "Hanzi Character",
@@ -1265,12 +1272,78 @@
             }
         }
 
+        // Render Multi-Character Selection View (up to 10 highlighted characters)
+        function renderMultiSelection(text) {
+            const chars = [...text];
+            const section = document.getElementById('multiSelectSection');
+            document.getElementById('singleEntryCard').classList.add('hidden');
+            section.classList.remove('hidden');
+
+            // Keep the toolbar Audio button working: point it at the full selection
+            document.getElementById('targetHanzi').textContent = text;
+
+            const combinedPinyin = chars.map(c => (singleCharDB[c] || {}).pinyin || '').join(' ');
+
+            let html = `
+                <div class="bg-cardBg rounded-2xl p-4 border border-blue-500/40 shadow-2xl flex items-center justify-between gap-3 sticky top-0 z-10">
+                    <div class="min-w-0">
+                        <div class="flex items-baseline gap-3 flex-wrap">
+                            <h2 class="text-2xl font-bold text-white">${text}</h2>
+                            <span class="text-sm text-purple-400 italic">${combinedPinyin}</span>
+                        </div>
+                        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">${chars.length} character${chars.length > 1 ? 's' : ''} selected</span>
+                    </div>
+                    <button onclick="speakChinese('${text}')" class="px-3 py-2 rounded-xl bg-panelBg/80 border border-slate-700/60 hover:border-blue-500 text-blue-400 text-xs shrink-0 transition" title="Speak selection">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+            `;
+
+            chars.forEach(c => {
+                const info = singleCharDB[c] || { pinyin: '?', english: 'No definition available', radical: '', emoji: '🔤', words: [] };
+                const wordChips = (info.words || []).map(w => {
+                    const def = wordDefinitions[w] || {};
+                    return `<span class="inline-flex items-baseline gap-1.5 px-2.5 py-1 rounded-lg bg-panelBg/80 border border-slate-800 text-xs" title="${def.english || ''}">
+                        <span class="text-slate-100 font-semibold">${w}</span>
+                        <span class="text-purple-400 font-mono text-[10px]">${def.pinyin || ''}</span>
+                        <span class="text-slate-400 text-[10px]">${def.english || ''}</span>
+                    </span>`;
+                }).join('');
+
+                html += `
+                <div class="bg-cardBg rounded-2xl p-4 border border-slate-700/50 shadow-xl cursor-pointer hover:border-blue-500/60 transition" onclick="updateDictionaryPanel('${c}', '${c}')" title="Click to inspect ${c}">
+                    <div class="flex items-center gap-4">
+                        <div class="flex flex-col items-center shrink-0">
+                            <span class="text-4xl font-bold text-white leading-none">${c}</span>
+                            <span class="text-2xl mt-2">${info.emoji || '🔤'}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-baseline gap-2 flex-wrap">
+                                <span class="text-base text-purple-400 font-mono">${info.pinyin || ''}</span>
+                                ${info.radical ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400">${info.radical}</span>` : ''}
+                            </div>
+                            <p class="text-sm text-slate-200 mt-1 leading-relaxed">${info.english || 'No definition'}</p>
+                        </div>
+                        <i class="fa-solid fa-angle-right text-slate-600 shrink-0"></i>
+                    </div>
+                    ${info.words && info.words.length ? `<div class="mt-3 pt-3 border-t border-slate-800/70 flex flex-wrap gap-1.5">${wordChips}</div>` : ''}
+                </div>`;
+            });
+
+            section.innerHTML = html;
+            document.getElementById('dictionaryDisplay').scrollTop = 0;
+        }
+
         // Highlight Selection Event Listener
         document.addEventListener('selectionchange', () => {
             const selection = window.getSelection();
             const text = selection.toString().trim();
             if (text && text.length <= 10 && /^[\u4e00-\u9fa5]+$/.test(text)) {
-                updateDictionaryPanel(text, null);
+                if (text.length >= 2) {
+                    renderMultiSelection(text);
+                } else {
+                    updateDictionaryPanel(text, null);
+                }
             }
         });
 
