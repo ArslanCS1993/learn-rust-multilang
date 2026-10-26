@@ -1,105 +1,766 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>learn-rust-multilang — Chinese Algorithm Vocab</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      line-height: 1.6;
-      min-height: 100vh;
-      padding: 2rem;
-    }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #f0f6fc; }
-    .subtitle { color: #8b949e; margin-bottom: 2rem; }
-    .stats { display: flex; gap: 2rem; margin-bottom: 2rem; color: #8b949e; font-size: 0.9rem; }
-    .stat strong { color: #f0f6fc; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 1rem;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-    .card:hover { border-color: #58a6ff; transform: translateY(-2px); }
-    .char { font-size: 2.5rem; font-weight: bold; color: #f0f6fc; }
-    .pinyin { color: #a371f7; font-size: 0.9rem; margin: 0.25rem 0; }
-    .meaning { color: #8b949e; font-size: 0.85rem; }
-    .compounds { margin-top: 2rem; }
-    .compounds h2 { font-size: 1.5rem; margin-bottom: 1rem; }
-    .compound-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .compound-tag {
-      background: #21262d;
-      border: 1px solid #30363d;
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #e6edf3;
-    }
-    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #30363d; color: #8b949e; font-size: 0.85rem; text-align: center; }
-    a { color: #58a6ff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Dual-Panel Chinese Reader</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0e0f14',
+                        panelBg: '#151720',
+                        cardBg: '#1c1f2e',
+                        cardHover: '#24283b',
+                        accentBlue: '#3b82f6',
+                        accentPurple: '#8b5cf6',
+                        accentCyan: '#06b6d4',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for UI Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #0e0f14;
+            color: #e2e8f0;
+            user-select: text;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #121318; }
+        ::-webkit-scrollbar-thumb { background: #2b2f45; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        /* Compound Word Wrapper */
+        .hz-word-group {
+            display: inline-flex;
+            align-items: center;
+            padding: 1px 2px;
+            margin: 1px;
+            border-radius: 6px;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            background: rgba(30, 41, 59, 0.4);
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .hz-word-group:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+        .hz-word-group.word-active {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.25);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+        }
+
+        /* Individual Character Unit Inside Words */
+        .hz-char {
+            cursor: pointer;
+            padding: 1px 3px;
+            border-radius: 4px;
+            transition: all 0.12s ease;
+            display: inline-block;
+        }
+        .hz-char:hover {
+            background-color: rgba(6, 182, 212, 0.35);
+            color: #a5f3fc;
+            transform: translateY(-1px);
+        }
+        .hz-char.char-active {
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+        }
+
+        /* Pinyin Ruby Annotation Styling */
+        rt {
+            font-size: 0.62em;
+            color: #94a3b8;
+            font-weight: 400;
+            user-select: none;
+            line-height: 1.1;
+        }
+
+        /* SVG Visual Animations */
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.08); opacity: 1; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.8)); }
+        }
+        @keyframes floatData {
+            0% { transform: translateY(0px) scale(0.96); opacity: 0.7; }
+            50% { transform: translateY(-7px) scale(1.04); opacity: 1; }
+            100% { transform: translateY(0px) scale(0.96); opacity: 0.7; }
+        }
+        .anim-spin { animation: spinSlow 12s linear infinite; transform-origin: center; }
+        .anim-pulse { animation: pulseGlow 3s ease-in-out infinite; transform-origin: center; }
+        .anim-float { animation: floatData 3.5s ease-in-out infinite; }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <h1>learn-rust-multilang</h1>
-    <p class="subtitle">Chinese characters for algorithm & programming vocabulary — meaning-based SVG animations</p>
-    <div class="stats">
-      <div class="stat"><strong id="count-single">0</strong> single characters</div>
-      <div class="stat"><strong id="count-compound">0</strong> compound words</div>
-      <div class="stat">Source: <a href="https://algo.course.rs" target="_blank">algo.course.rs</a></div>
-    </div>
-    <section>
-      <h2 style="margin-bottom:1rem;">Single Characters</h2>
-      <div class="grid" id="singles"></div>
-    </section>
-    <section class="compounds">
-      <h2>Compound Words</h2>
-      <div class="compound-list" id="compounds"></div>
-    </section>
-    <footer>
-      Data: <code>src/characters.json</code> · Built for <a href="https://github.com/ArslanCS1993/learn-rust-multilang" target="_blank">GitHub Pages</a>
-    </footer>
-  </div>
-  <script>
-    async function loadData() {
-      try {
-        const res = await fetch('../src/characters.json');
-        const data = await res.json();
-        renderSingles(data.characters);
-        renderCompounds(data.characters);
-      } catch (e) {
-        console.error('Failed to load characters.json', e);
-      }
-    }
-    function renderSingles(chars) {
-      const container = document.getElementById('singles');
-      const singles = Object.entries(chars).filter(([k]) => k.length === 1);
-      document.getElementById('count-single').textContent = singles.length;
-      container.innerHTML = singles.map(([char, info]) => `
-        <div class="card">
-          <div class="char">${char}</div>
-          <div class="pinyin">${info.pinyin}</div>
-          <div class="meaning">${info.meaning}</div>
+<body class="h-screen flex flex-col overflow-hidden bg-darkBg text-slate-200">
+
+    <!-- Top Navigation Header -->
+    <header class="h-14 border-b border-slate-800/80 bg-panelBg/90 backdrop-blur flex items-center justify-between px-6 z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-blue-500/20">
+                译
+            </div>
+            <h1 class="text-sm md:text-base font-semibold text-slate-100 tracking-wide flex items-center gap-2">
+                <span>Chinese Dual-Panel Reader</span>
+                <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hidden sm:inline-block">Nested Character Inspector</span>
+            </h1>
         </div>
-      `).join('');
-    }
-    function renderCompounds(chars) {
-      const container = document.getElementById('compounds');
-      const compounds = Object.entries(chars).filter(([k]) => k.length > 1);
-      document.getElementById('count-compound').textContent = compounds.length;
-      container.innerHTML = compounds.map(([word, info]) => `
-        <span class="compound-tag">${word} (${info.pinyin})</span>
-      `).join('');
-    }
-    loadData();
-  </script>
+
+        <!-- Mode Switches & Custom Text Input -->
+        <div class="flex items-center gap-3 text-xs">
+            <!-- Click Mode Selection Toggle -->
+            <div class="bg-cardBg border border-slate-700/80 p-1 rounded-xl flex items-center gap-1">
+                <button id="modeWordBtn" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition flex items-center gap-1.5" title="Click whole compound words">
+                    <i class="fa-solid fa-layer-group"></i> <span>Word Mode</span>
+                </button>
+                <button id="modeCharBtn" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5" title="Click individual characters directly">
+                    <i class="fa-solid fa-font"></i> <span>Char Mode</span>
+                </button>
+            </div>
+
+            <button id="togglePinyinBtn" class="px-3 py-1.5 rounded-xl bg-cardBg hover:bg-slate-700 text-slate-300 font-medium border border-slate-700/80 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-language text-purple-400"></i>
+                <span id="pinyinBtnText">Show Pinyin</span>
+            </button>
+
+            <button id="editContentBtn" class="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 font-medium border border-blue-500/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Paste Text</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Split Area -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- Left Reading Section -->
+        <section class="w-1/2 flex flex-col border-r border-slate-800/80 bg-darkBg relative">
+            <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-blue-400"></i>
+                    <span>Source Text (Click characters inside word blocks or highlight text)</span>
+                </div>
+                <button id="speakFullBtn" class="hover:text-blue-400 transition flex items-center gap-1" title="Read aloud">
+                    <i class="fa-solid fa-volume-high text-xs"></i> Speak Passage
+                </button>
+            </div>
+
+            <!-- Reading Passage Content -->
+            <div id="readingContainer" class="flex-1 overflow-y-auto p-8 space-y-6 text-xl md:text-2xl leading-relaxed text-slate-200">
+                <!-- Text populated via JavaScript -->
+            </div>
+
+            <!-- Custom Text Input Modal -->
+            <div id="editorModal" class="hidden absolute inset-0 bg-darkBg/95 backdrop-blur-md p-6 flex flex-col z-30">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines text-purple-400"></i> Custom Reading Passage
+                    </h3>
+                    <button id="closeEditorBtn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <textarea id="customTextInput" class="flex-1 bg-panelBg border border-slate-700/80 rounded-2xl p-4 text-slate-200 focus:outline-none focus:border-blue-500 font-mono text-sm leading-relaxed resize-none" placeholder="Paste Chinese text here..."></textarea>
+                <div class="mt-4 flex justify-end gap-3">
+                    <button id="resetDefaultBtn" class="px-4 py-2 rounded-xl bg-cardBg hover:bg-slate-700 text-slate-300 text-xs font-medium transition">Load Screenshot Passage</button>
+                    <button id="loadTextBtn" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition shadow-lg shadow-blue-500/20">
+                        Process & Read
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Side Breakdown & Visual Panel -->
+        <section class="w-1/2 flex flex-col bg-panelBg overflow-hidden">
+            
+            <!-- Quick Dictionary Search & Audio Bar -->
+            <div class="p-4 border-b border-slate-800/80 bg-panelBg/80 flex gap-3 items-center">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="dictionarySearch" placeholder="Search Hanzi, Pinyin or English..." class="w-full bg-cardBg border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
+                </div>
+                <button id="ttsButton" class="px-3.5 py-2 rounded-xl bg-cardBg border border-slate-700/80 hover:border-blue-500 text-blue-400 text-xs font-medium transition flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                    <span>Audio</span>
+                </button>
+            </div>
+
+            <!-- Scrollable Analysis Area -->
+            <div id="dictionaryDisplay" class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Main Compound / Character Card -->
+                <div class="bg-cardBg rounded-2xl p-6 border border-slate-700/50 shadow-2xl relative overflow-hidden">
+                    
+                    <!-- Glow Accents -->
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <!-- Phrase Title Header -->
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-baseline gap-3 flex-wrap">
+                                <h2 id="targetHanzi" class="text-4xl font-bold tracking-tight text-white">算法</h2>
+                                <span id="targetPinyin" class="text-lg text-purple-400 font-medium italic">suàn fǎ</span>
+                                <span id="targetPos" class="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400 font-semibold tracking-wider uppercase">Noun</span>
+                            </div>
+                            <p id="targetEnglish" class="text-slate-300 mt-2 text-sm md:text-base font-medium">Algorithm; step-by-step procedure for calculation.</p>
+                        </div>
+                        <div id="targetEmoji" class="text-4xl bg-panelBg/80 border border-slate-700/60 p-3 rounded-2xl shadow-inner flex items-center justify-center shrink-0">
+                            🧮
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Animated SVG Concept Canvas -->
+                    <div class="mt-5 border border-slate-700/60 rounded-2xl bg-darkBg/80 p-5 flex flex-col items-center justify-center relative min-h-[160px]">
+                        <div id="svgContainer" class="w-full flex justify-center items-center">
+                            <!-- Animated SVG renders dynamically -->
+                        </div>
+                        <span id="svgCaption" class="text-[11px] text-slate-500 mt-2 font-mono tracking-wide">Concept Animation</span>
+                    </div>
+
+                    <!-- Nested Character Breakdown Section (Addresses Feedback) -->
+                    <div id="charBreakdownSection" class="mt-6 pt-5 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-puzzle-piece text-cyan-400"></i> Individual Character Breakdown</span>
+                            <span class="text-[10px] text-slate-500 font-normal">Click a character to inspect</span>
+                        </h4>
+                        <div id="charBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Character mini-cards rendered dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Related Words & Compounds -->
+                    <div class="mt-6 pt-5 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project text-blue-400"></i> Common Compound Words & Usage
+                        </h4>
+                        <div id="compoundWordsList" class="space-y-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Context Sentence -->
+                    <div class="mt-6 pt-5 border-t border-slate-800">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-quote-left text-purple-400"></i> Passage Context
+                        </h4>
+                        <p id="contextSentence" class="text-xs text-slate-300 italic leading-relaxed bg-panelBg/60 p-3 rounded-xl border border-slate-800/80">
+                            "算法是计算过程的具体描述..." — An algorithm is a detailed description of a computational process.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Exact passage from user screenshot + algorithm overview
+        const defaultSampleText = `算法，一个高大上的词汇，在计算机领域也绝对是凡人的禁忌，但是其实算法也没那么神秘，我们在写代码时，无时无刻都在与算法打交道，只是绝大部分算法我们无法感知到而已，因为这些算法已经很好地被包装在其它库中，我们只需要输入数据然后调用它获得输出数据即可，因此这就引出了算法的基本定义：
+
+计算机算法是以一步接一步的方式来详细描述计算机如何将输入转化为所要求的输出的过程，或者说，算法是对计算机上执行的计算过程的具体描述。（以上内容摘抄自百度百科），简单点说计算机算法就是将输入转化为所要求的输出过程。`;
+
+        // Single Character Dictionary Entry Fallbacks & Database
+        const singleCharDB = {
+            "算": { pinyin: "suàn", english: "Calculate; compute; figure", radical: "竹 (Bamboo)", emoji: "🧮" },
+            "法": { pinyin: "fǎ", english: "Method; way; law; rule", radical: "氵 (Water)", emoji: "⚖️" },
+            "计": { pinyin: "jì", english: "Count; compute; plan", radical: "讠 (Speech)", emoji: "⏱️" },
+            "机": { pinyin: "jī", english: "Machine; trigger; opportunity", radical: "木 (Wood)", emoji: "⚙️" },
+            "代": { pinyin: "dài", english: "Replace; code; era", radical: "亻 (Man)", emoji: "🔄" },
+            "码": { pinyin: "mǎ", english: "Number; symbol; code", radical: "石 (Stone)", emoji: "🏷️" },
+            "神": { pinyin: "shén", english: "Spirit; god; mystical; divine", radical: "礻 (Spirit)", emoji: "✨" },
+            "秘": { pinyin: "mì", english: "Secret; mysterious; confidential", radical: "禾 (Grain)", emoji: "🔮" },
+            "数": { pinyin: "shù", english: "Number; figure; count", radical: "攵 (Rapping)", emoji: "🔢" },
+            "据": { pinyin: "jù", english: "According to; proof; base", radical: "扌 (Hand)", emoji: "📄" },
+            "输": { pinyin: "shū", english: "Transport; convey; enter", radical: "车 (Cart)", emoji: "🚚" },
+            "入": { pinyin: "rù", english: "Enter; input; join", radical: "入 (Enter)", emoji: "📥" },
+            "出": { pinyin: "chū", english: "Exit; output; produce", radical: "凵 (Container)", emoji: "📤" },
+            "包": { pinyin: "bāo", english: "Wrap; package; bundle", radical: "勹 (Wrap)", emoji: "📦" },
+            "装": { pinyin: "zhuāng", english: "Dress; equip; install; pack", radical: "衣 (Clothes)", emoji: "👔" },
+            "过": { pinyin: "guò", english: "Pass; cross; process", radical: "辶 (Walk)", emoji: "🚶" },
+            "程": { pinyin: "chéng", english: "Rule; order; journey", radical: "禾 (Grain)", emoji: "📐" }
+        };
+
+        // Phrase / Word Dictionary
+        const dictionaryDB = {
+            "算法": {
+                pinyin: "suàn fǎ",
+                pos: "Noun",
+                english: "Algorithm; calculation procedure.",
+                emoji: "🧮",
+                svgType: "gears",
+                compounds: [
+                    { word: "计算机算法", pinyin: "jì suàn jī suàn fǎ", english: "Computer Algorithm" },
+                    { word: "排序算法", pinyin: "pái xù suàn fǎ", english: "Sorting Algorithm" }
+                ],
+                context: "指解题方案的准确而完整的描述，是一系列解决问题的清晰指令。"
+            },
+            "计算机": {
+                pinyin: "jì suàn jī",
+                pos: "Noun",
+                english: "Computer; electronic calculating machine.",
+                emoji: "💻",
+                svgType: "computer",
+                compounds: [
+                    { word: "计算机科学", pinyin: "jì suàn jī kē xué", english: "Computer Science" },
+                    { word: "微型计算机", pinyin: "wēi xíng jì suàn jī", english: "Microcomputer" }
+                ],
+                context: "一种能够按照程序运行，自动、高速处理海量数据的现代智能电子设备。"
+            },
+            "神秘": {
+                pinyin: "shén mì",
+                pos: "Adjective",
+                english: "Mysterious; mystical; secret.",
+                emoji: "🔮",
+                svgType: "magic",
+                compounds: [
+                    { word: "神秘感", pinyin: "shén mì gǎn", english: "Sense of Mystery" },
+                    { word: "神秘莫测", pinyin: "shén mì mò cè", english: "Unfathomable" }
+                ],
+                context: "难以猜测或理解的，具有隐秘特质的事物。"
+            },
+            "代码": {
+                pinyin: "dài mǎ",
+                pos: "Noun",
+                english: "Source Code; programming instructions.",
+                emoji: "📜",
+                svgType: "code",
+                compounds: [
+                    { word: "源代码", pinyin: "yuán dài mǎ", english: "Source Code" },
+                    { word: "编写代码", pinyin: "biān xiě dài mǎ", english: "Write Code" }
+                ],
+                context: "程序员用特定编程语言编写的指令集合。"
+            },
+            "数据": {
+                pinyin: "shù jù",
+                pos: "Noun",
+                english: "Data; information; numerical values.",
+                emoji: "📊",
+                svgType: "data",
+                compounds: [
+                    { word: "数据库", pinyin: "shù jù kù", english: "Database" },
+                    { word: "大数据", pinyin: "dà shù jù", english: "Big Data" }
+                ],
+                context: "对事实、概念或指令的一种特殊表达形式。"
+            },
+            "输入": {
+                pinyin: "shū rù",
+                pos: "Verb / Noun",
+                english: "Input; import; enter data.",
+                emoji: "📥",
+                svgType: "io",
+                compounds: [
+                    { word: "输入法", pinyin: "shū rù fǎ", english: "Input Method (IME)" }
+                ],
+                context: "把数据或信号送入计算机或其它系统中。"
+            },
+            "输出": {
+                pinyin: "shū chū",
+                pos: "Verb / Noun",
+                english: "Output; export; result produced.",
+                emoji: "📤",
+                svgType: "io",
+                compounds: [
+                    { word: "输出设备", pinyin: "shū chū shè bèi", english: "Output Device" }
+                ],
+                context: "把计算机处理好的数据传递给外部设备或使用者。"
+            },
+            "包装": {
+                pinyin: "bāo zhuāng",
+                pos: "Verb / Noun",
+                english: "Package; wrap up; encapsulate.",
+                emoji: "📦",
+                svgType: "package",
+                compounds: [
+                    { word: "库包装", pinyin: "kù bāo zhuāng", english: "Library Encapsulation" }
+                ],
+                context: "将底层逻辑封装起来提供简单调用的过程。"
+            },
+            "过程": {
+                pinyin: "guò chéng",
+                pos: "Noun",
+                english: "Process; procedure; course.",
+                emoji: "🔄",
+                svgType: "gears",
+                compounds: [
+                    { word: "执行过程", pinyin: "zhí xíng guò chéng", english: "Execution Process" }
+                ],
+                context: "事物发展所经过的程序或阶段。"
+            }
+        };
+
+        // App States
+        let showPinyin = false;
+        let activeSelectionMode = 'word'; // 'word' or 'char'
+        let activeWordSpan = null;
+        let activeCharSpan = null;
+
+        // SVG Animation Generator
+        function generateAnimatedSVG(type) {
+            switch(type) {
+                case 'gears':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <g class="anim-spin" style="transform-origin: 38px 38px;">
+                            <circle cx="38" cy="38" r="18" stroke="#3b82f6" stroke-width="4" stroke-dasharray="6 4"/>
+                            <circle cx="38" cy="38" r="8" fill="#3b82f6" opacity="0.4"/>
+                        </g>
+                        <g class="anim-spin" style="transform-origin: 64px 64px; animation-direction: reverse; animation-duration: 8s;">
+                            <circle cx="64" cy="64" r="14" stroke="#8b5cf6" stroke-width="4" stroke-dasharray="5 3"/>
+                            <circle cx="64" cy="64" r="6" fill="#8b5cf6" opacity="0.4"/>
+                        </g>
+                    </svg>`;
+                case 'computer':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="20" y="22" width="60" height="42" rx="6" stroke="#3b82f6" stroke-width="4" fill="#151720"/>
+                        <rect x="26" y="28" width="48" height="30" rx="3" fill="#0e0f14"/>
+                        <path d="M32 38 H52 M32 46 H44" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" class="anim-pulse"/>
+                        <path d="M15 72 H85 L80 64 H20 L15 72 Z" fill="#24283b" stroke="#3b82f6" stroke-width="2"/>
+                    </svg>`;
+                case 'code':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="15" y="15" width="70" height="70" rx="10" stroke="#8b5cf6" stroke-width="3" fill="#151720"/>
+                        <path d="M30 35 L20 45 L30 55" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M70 35 L80 45 L70 55" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="55" y1="32" x2="45" y2="58" stroke="#06b6d4" stroke-width="4" stroke-linecap="round"/>
+                    </svg>`;
+                case 'magic':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="28" stroke="#8b5cf6" stroke-width="3" fill="#1e1b4b" class="anim-pulse"/>
+                        <circle cx="50" cy="50" r="18" fill="#a78bfa" opacity="0.3" class="anim-float"/>
+                        <path d="M50 12 V22 M50 78 V88 M12 50 H22 M78 50 H88" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" class="anim-spin"/>
+                    </svg>`;
+                case 'data':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="22" y="55" width="12" height="30" rx="3" fill="#3b82f6" class="anim-float" style="animation-delay: 0s;"/>
+                        <rect x="44" y="35" width="12" height="50" rx="3" fill="#8b5cf6" class="anim-float" style="animation-delay: 0.3s;"/>
+                        <rect x="66" y="20" width="12" height="65" rx="3" fill="#06b6d4" class="anim-float" style="animation-delay: 0.6s;"/>
+                    </svg>`;
+                case 'io':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M20 38 H65 M65 38 L52 26 M65 38 L52 50" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="anim-pulse"/>
+                        <path d="M80 62 H35 M35 62 L48 50 M35 62 L48 74" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="anim-pulse" style="animation-delay: 0.5s;"/>
+                    </svg>`;
+                case 'package':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M50 18 L82 34 L50 50 L18 34 Z" fill="#24283b" stroke="#3b82f6" stroke-width="3" class="anim-float"/>
+                        <path d="M18 34 V66 L50 82 V50 Z" fill="#1c1f2e" stroke="#3b82f6" stroke-width="3"/>
+                        <path d="M82 34 V66 L50 82 V50 Z" fill="#151720" stroke="#8b5cf6" stroke-width="3"/>
+                    </svg>`;
+                default:
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="28" stroke="#3b82f6" stroke-width="3" stroke-dasharray="6 4" class="anim-spin"/>
+                        <circle cx="50" cy="50" r="10" fill="#8b5cf6" class="anim-pulse"/>
+                    </svg>`;
+            }
+        }
+
+        // Render Passage Content with Nested Character Containers
+        function renderReadingContent(rawText) {
+            const container = document.getElementById('readingContainer');
+            container.innerHTML = '';
+
+            const paragraphs = rawText.split('\n');
+
+            paragraphs.forEach(pText => {
+                if (!pText.trim()) return;
+
+                const pElem = document.createElement('p');
+                pElem.className = 'leading-relaxed tracking-wide font-normal mb-4';
+
+                let idx = 0;
+                while (idx < pText.length) {
+                    let matchedPhrase = null;
+
+                    // Match multi-character words from dictionary
+                    for (let len = 4; len >= 2; len--) {
+                        const sub = pText.substr(idx, len);
+                        if (dictionaryDB[sub]) {
+                            matchedPhrase = sub;
+                            break;
+                        }
+                    }
+
+                    if (matchedPhrase) {
+                        // Create Word Group Container
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = 'hz-word-group';
+                        wordSpan.dataset.word = matchedPhrase;
+
+                        // Fill with individual characters
+                        for (let cIdx = 0; cIdx < matchedPhrase.length; cIdx++) {
+                            const char = matchedPhrase[cIdx];
+                            const charSpan = createCharSpan(char, matchedPhrase);
+                            wordSpan.appendChild(charSpan);
+                        }
+
+                        // Word-level click listener
+                        wordSpan.addEventListener('click', (e) => {
+                            if (activeSelectionMode === 'word') {
+                                e.stopPropagation();
+                                clearActiveHighlights();
+                                wordSpan.classList.add('word-active');
+                                activeWordSpan = wordSpan;
+                                updateDictionaryPanel(matchedPhrase, null);
+                            }
+                        });
+
+                        pElem.appendChild(wordSpan);
+                        idx += matchedPhrase.length;
+                    } else {
+                        const char = pText[idx];
+                        if (/[\s，。、（）！：；“”‘’]/.test(char)) {
+                            const span = document.createElement('span');
+                            span.textContent = char;
+                            span.className = 'text-slate-500 select-none mx-0.5';
+                            pElem.appendChild(span);
+                        } else {
+                            // Standalone Character Span
+                            const charSpan = createCharSpan(char, null);
+                            pElem.appendChild(charSpan);
+                        }
+                        idx++;
+                    }
+                }
+
+                container.appendChild(pElem);
+            });
+        }
+
+        // Helper to Create Individual Character Element
+        function createCharSpan(char, parentWord) {
+            const span = document.createElement('span');
+            span.className = 'hz-char';
+            span.dataset.char = char;
+
+            const charInfo = singleCharDB[char] || { pinyin: "pīn" };
+
+            if (showPinyin && charInfo.pinyin) {
+                span.innerHTML = `<ruby class="pinyin-ruby">${char}<rt>${charInfo.pinyin}</rt></ruby>`;
+            } else {
+                span.textContent = char;
+            }
+
+            // Click Handler for Character
+            span.addEventListener('click', (e) => {
+                if (activeSelectionMode === 'char' || !parentWord) {
+                    e.stopPropagation();
+                    clearActiveHighlights();
+                    span.classList.add('char-active');
+                    activeCharSpan = span;
+
+                    // Display individual character breakdown
+                    updateDictionaryPanel(parentWord || char, char);
+                }
+            });
+
+            return span;
+        }
+
+        function clearActiveHighlights() {
+            document.querySelectorAll('.hz-word-group.word-active').forEach(el => el.classList.remove('word-active'));
+            document.querySelectorAll('.hz-char.char-active').forEach(el => el.classList.remove('char-active'));
+        }
+
+        // Update Dictionary & Breakdown Display
+        function updateDictionaryPanel(phraseOrChar, focusedChar) {
+            const entry = dictionaryDB[phraseOrChar] || {
+                pinyin: (singleCharDB[phraseOrChar] || {}).pinyin || "pīn yīn",
+                pos: phraseOrChar.length > 1 ? "Compound Phrase" : "Hanzi Character",
+                english: (singleCharDB[phraseOrChar] || {}).english || `Chinese term: "${phraseOrChar}"`,
+                emoji: (singleCharDB[phraseOrChar] || {}).emoji || "🔤",
+                svgType: "default",
+                compounds: [],
+                context: `Selected item "${phraseOrChar}" from reading text.`
+            };
+
+            const targetHanzi = focusedChar || phraseOrChar;
+            const displayEntry = focusedChar ? (singleCharDB[focusedChar] || {}) : entry;
+
+            document.getElementById('targetHanzi').textContent = targetHanzi;
+            document.getElementById('targetPinyin').textContent = focusedChar ? (displayEntry.pinyin || '') : entry.pinyin;
+            document.getElementById('targetPos').textContent = focusedChar ? "Single Character" : entry.pos;
+            document.getElementById('targetEnglish').textContent = focusedChar ? (displayEntry.english || 'Character breakdown') : entry.english;
+            document.getElementById('targetEmoji').textContent = focusedChar ? (displayEntry.emoji || '🔤') : entry.emoji;
+            document.getElementById('contextSentence').textContent = entry.context || `Usage in context.`;
+
+            // Render Animated SVG
+            const svgContainer = document.getElementById('svgContainer');
+            svgContainer.innerHTML = generateAnimatedSVG(entry.svgType || 'default');
+            document.getElementById('svgCaption').textContent = `Visual Concept: ${targetHanzi}`;
+
+            // Render Individual Character Breakdown Cards
+            const charContainer = document.getElementById('charBreakdownContainer');
+            charContainer.innerHTML = '';
+
+            const charactersToBreak = phraseOrChar.split('');
+            charactersToBreak.forEach(c => {
+                const info = singleCharDB[c] || { pinyin: 'pīn', english: 'Character unit', radical: 'Standard' };
+                const isSelected = (focusedChar === c);
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border transition cursor-pointer flex items-center justify-between ${
+                    isSelected 
+                    ? 'bg-blue-600/20 border-blue-500 shadow-md' 
+                    : 'bg-panelBg/80 border-slate-800 hover:border-slate-700'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl font-bold text-white">${c}</span>
+                        <div>
+                            <span class="text-xs text-purple-400 font-mono block">${info.pinyin}</span>
+                            <span class="text-[11px] text-slate-400 line-clamp-1">${info.english}</span>
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">${info.radical || ''}</span>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    updateDictionaryPanel(phraseOrChar, c);
+                });
+
+                charContainer.appendChild(card);
+            });
+
+            // Render Compound Words List
+            const compoundsList = document.getElementById('compoundWordsList');
+            compoundsList.innerHTML = '';
+
+            if (entry.compounds && entry.compounds.length > 0) {
+                entry.compounds.forEach(c => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-2.5 rounded-xl bg-panelBg/70 border border-slate-800 hover:border-slate-700 transition cursor-pointer';
+                    item.innerHTML = `
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold text-slate-100 text-xs">${c.word}</span>
+                            <span class="text-[10px] text-purple-400 font-mono">${c.pinyin}</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 truncate max-w-[160px]">${c.english}</span>
+                    `;
+                    item.addEventListener('click', () => updateDictionaryPanel(c.word, null));
+                    compoundsList.appendChild(item);
+                });
+            } else {
+                compoundsList.innerHTML = `<span class="text-xs text-slate-500 italic">No additional compounds listed.</span>`;
+            }
+        }
+
+        // Native Web Speech API Audio
+        function speakChinese(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Highlight Selection Event Listener
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            const text = selection.toString().trim();
+            if (text && text.length <= 10 && /^[\u4e00-\u9fa5]+$/.test(text)) {
+                updateDictionaryPanel(text, null);
+            }
+        });
+
+        // App Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            renderReadingContent(defaultSampleText);
+            updateDictionaryPanel("算法", null);
+
+            // Selection Mode Buttons
+            const modeWordBtn = document.getElementById('modeWordBtn');
+            const modeCharBtn = document.getElementById('modeCharBtn');
+
+            modeWordBtn.addEventListener('click', () => {
+                activeSelectionMode = 'word';
+                modeWordBtn.className = "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition flex items-center gap-1.5";
+                modeCharBtn.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+            });
+
+            modeCharBtn.addEventListener('click', () => {
+                activeSelectionMode = 'char';
+                modeCharBtn.className = "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium transition flex items-center gap-1.5";
+                modeWordBtn.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+            });
+
+            // Toggle Pinyin
+            document.getElementById('togglePinyinBtn').addEventListener('click', () => {
+                showPinyin = !showPinyin;
+                document.getElementById('pinyinBtnText').textContent = showPinyin ? "Hide Pinyin" : "Show Pinyin";
+                const currentText = document.getElementById('customTextInput').value || defaultSampleText;
+                renderReadingContent(currentText);
+            });
+
+            // Text Input Controls
+            const editorModal = document.getElementById('editorModal');
+            document.getElementById('editContentBtn').addEventListener('click', () => editorModal.classList.remove('hidden'));
+            document.getElementById('closeEditorBtn').addEventListener('click', () => editorModal.classList.add('hidden'));
+
+            document.getElementById('loadTextBtn').addEventListener('click', () => {
+                const text = document.getElementById('customTextInput').value.trim();
+                if (text) {
+                    renderReadingContent(text);
+                    editorModal.classList.add('hidden');
+                }
+            });
+
+            document.getElementById('resetDefaultBtn').addEventListener('click', () => {
+                document.getElementById('customTextInput').value = defaultSampleText;
+                renderReadingContent(defaultSampleText);
+                editorModal.classList.add('hidden');
+            });
+
+            // Dictionary Search
+            const searchInput = document.getElementById('dictionarySearch');
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const query = searchInput.value.trim();
+                    if (query) updateDictionaryPanel(query, null);
+                }
+            });
+
+            // TTS Speech Buttons
+            document.getElementById('ttsButton').addEventListener('click', () => {
+                const target = document.getElementById('targetHanzi').textContent;
+                speakChinese(target);
+            });
+
+            document.getElementById('speakFullBtn').addEventListener('click', () => {
+                const text = window.getSelection().toString() || defaultSampleText;
+                speakChinese(text);
+            });
+        });
+    </script>
 </body>
 </html>
