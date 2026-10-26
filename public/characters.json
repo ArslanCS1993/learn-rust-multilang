@@ -1,0 +1,312 @@
+{
+  "meta": {
+    "source": "algo.course.rs - Algos算法教程 (first page)",
+    "note": "Creative meaning-based SVG animations, not stroke order"
+  },
+  "characters": {
+    "算": {
+      "pinyin": "suàn",
+      "meaning": "calculate, algorithm, plan",
+      "components": ["bamboo (⺮)", "tool (工)"],
+      "story": "Ancient counting rods on a bamboo frame — the original computer",
+      "commonWords": ["算法", "计算", "算术", "打算", "估算"],
+      "svgAnimation": "abacus"
+    },
+    "法": {
+      "pinyin": "fǎ",
+      "meaning": "method, law, way, technique",
+      "components": ["water (氵)", "go (去)"],
+      "story": "Water flowing through channels — a method guides flow like law guides society",
+      "commonWords": ["方法", "法律", "法则", "算法", "法宝"],
+      "svgAnimation": "scales"
+    },
+    "程": {
+      "pinyin": "chéng",
+      "meaning": "process, journey, procedure, rule",
+      "components": ["grain (禾)", "present (呈)"],
+      "story": "Grain measured step by step — a journey measured in stages",
+      "commonWords": ["程序", "过程", "工程", "行程", "课程"],
+      "svgAnimation": "pipeline"
+    },
+    "序": {
+      "pinyin": "xù",
+      "meaning": "order, sequence, preface",
+      "components": ["wide (广)", "predict (予)"],
+      "story": "A wide hall where things line up in predicted order",
+      "commonWords": ["顺序", "次序", "序言", "秩序", "序列"],
+      "svgAnimation": "dominoes"
+    },
+    "语": {
+      "pinyin": "yǔ",
+      "meaning": "language, speech, words",
+      "components": ["speech (讠)", "five (五)", "mouth (口)"],
+      "story": "Five mouths speaking — the babel of human language",
+      "commonWords": ["语言", "汉语", "英语", "语法", "语句"],
+      "svgAnimation": "speechBubbles"
+    },
+    "编": {
+      "pinyin": "biān",
+      "meaning": "compile, weave, edit, organize",
+      "components": ["silk (纟)", "flatten (扁)"],
+      "story": "Silk threads woven flat — code woven into fabric of logic",
+      "commonWords": ["编程", "编译", "编辑", "编织", "编号"],
+      "svgAnimation": "loom"
+    },
+    "码": {
+      "pinyin": "mǎ",
+      "meaning": "code, number, symbol, yard",
+      "components": ["stone (石)", "horse (马)"],
+      "story": "Stone markers like horse posts on a road — code marks the path",
+      "commonWords": ["代码", "密码", "数码", "条码", "码头"],
+      "svgAnimation": "matrixRain"
+    },
+    "数": {
+      "pinyin": "shù/shǔ",
+      "meaning": "number, data, count, few",
+      "components": ["strike (攵)", "rice (米)"],
+      "story": "Counting rice grains one by one — the essence of data",
+      "commonWords": ["数据", "数字", "数学", "数量", "少数"],
+      "svgAnimation": "countingGrains"
+    },
+    "据": {
+      "pinyin": "jù",
+      "meaning": "basis, evidence, according to, occupy",
+      "components": ["hand (扌)", "reside (居)"],
+      "story": "Hand holding firm ground — evidence you can stand on",
+      "commonWords": ["数据", "根据", "证据", "占据", "据点"],
+      "svgAnimation": "magnifyingGlass"
+    },
+    "结": {
+      "pinyin": "jié/jiē",
+      "meaning": "knot, tie, structure, result, bear fruit",
+      "components": ["silk (纟)", "lucky (吉)"],
+      "story": "Lucky silk knots — structure binds chaos into order",
+      "commonWords": ["结构", "结果", "结合", "结晶", "结账"],
+      "svgAnimation": "knotTying"
+    },
+    "构": {
+      "pinyin": "gòu",
+      "meaning": "construct, compose, structure",
+      "components": ["wood (木)", "flocculent (冓)"],
+      "story": "Wood pieces fitted together — architecture from components",
+      "commonWords": ["结构", "构造", "构思", "构建", "拼构"],
+      "svgAnimation": "blueprint"
+    },
+    "实": {
+      "pinyin": "shí",
+      "meaning": "real, solid, true, honest, fruit",
+      "components": ["roof (宀)", "cowrie (贝)"],
+      "story": "Treasure under a roof — solid reality, not illusion",
+      "commonWords": ["实现", "实际", "真实", "扎实", "充实"],
+      "svgAnimation": "crystalForming"
+    },
+    "现": {
+      "pinyin": "xiàn",
+      "meaning": "appear, present, current, visible",
+      "components": ["king (王)", "see (见)"],
+      "story": "King seeing clearly — truth revealed in the light",
+      "commonWords": ["实现", "现代", "现场", "出现", "现象"],
+      "svgAnimation": "spotlightReveal"
+    },
+    "优": {
+      "pinyin": "yōu",
+      "meaning": "excellent, superior, optimize, gentle",
+      "components": ["person (亻)", "worry (忧)"],
+      "story": "Person rising above worry — excellence transcends struggle",
+      "commonWords": ["优化", "优秀", "优势", "优雅", "优先"],
+      "svgAnimation": "risingStar"
+    },
+    "化": {
+      "pinyin": "huà",
+      "meaning": "transform, change, melt, -ize",
+      "components": ["person (亻)", "spoon (匕)"],
+      "story": "Person with a spoon — alchemy, stirring transformation",
+      "commonWords": ["优化", "转化", "化学", "文化", "消化"],
+      "svgAnimation": "metamorphosis"
+    },
+    "适": {
+      "pinyin": "shì",
+      "meaning": "adapt, suitable, fit, comfortable",
+      "components": ["walk (辶)", "history (史)"],
+      "story": "Walking through history — adapting to each era",
+      "commonWords": ["适合", "适应", "适宜", "舒适", "适配"],
+      "svgAnimation": "puzzleFit"
+    },
+    "合": {
+      "pinyin": "hé",
+      "meaning": "combine, fit, close, match, total",
+      "components": ["mouth (口)", "one (一)", "mouth (口)"],
+      "story": "Two mouths meeting as one — perfect fit, harmony",
+      "commonWords": ["适合", "结合", "合并", "合适", "全合"],
+      "svgAnimation": "merge"
+    },
+    "题": {
+      "pinyin": "tí",
+      "meaning": "topic, problem, title, subject",
+      "components": ["head (页)", "is (是)"],
+      "story": "A page that is the question — the title poses the problem",
+      "commonWords": ["题目", "题解", "话题", "标题", "考题"],
+      "svgAnimation": "questionMark"
+    },
+    "解": {
+      "pinyin": "jiě/jiè/xiè",
+      "meaning": "solve, explain, untie, release, understand",
+      "components": ["horn (角)", "knife (刀)", "cow (牛)"],
+      "story": "Knife cutting through horns — untying the knot of confusion",
+      "commonWords": ["解决", "解释", "理解", "题解", "分解"],
+      "svgAnimation": "keyUnlock"
+    },
+    "涵": {
+      "pinyin": "hán",
+      "meaning": "contain, include, immerse, cultivate",
+      "components": ["water (氵)", "complete (咸)"],
+      "story": "Water holding completeness — a vessel embracing all",
+      "commonWords": ["涵盖", "包涵", "涵养", "内涵", "涵泳"],
+      "svgAnimation": "vesselFilling"
+    },
+    "盖": {
+      "pinyin": "gài/gě/hé",
+      "meaning": "cover, lid, build, overshadow",
+      "components": ["dish (皿)", "monitor (监)"],
+      "story": "A dish monitoring what's beneath — the lid that completes",
+      "commonWords": ["涵盖", "盖子", "建盖", "盖章", "盖房"],
+      "svgAnimation": "lidClosing"
+    },
+    "输": {
+      "pinyin": "shū",
+      "meaning": "transport, output, lose, donate",
+      "components": ["car (车)", "predict (予)"],
+      "story": "Car delivering what was promised — output in motion",
+      "commonWords": ["输入", "输出", "输送", "输血", "输赢"],
+      "svgAnimation": "conveyorBelt"
+    },
+    "入": {
+      "pinyin": "rù",
+      "meaning": "enter, input, join, income",
+      "components": ["enter (入)"],
+      "story": "A single stroke entering — the gateway inward",
+      "commonWords": ["输入", "进入", "收入", "入门", "入口"],
+      "svgAnimation": "portalIn"
+    },
+    "出": {
+      "pinyin": "chū",
+      "meaning": "exit, output, produce, go out",
+      "components": ["cave (凵)", "mountain (山)"],
+      "story": "Mountain emerging from cave — birth, output, revelation",
+      "commonWords": ["输出", "出现", "出口", "产出", "出发"],
+      "svgAnimation": "portalOut"
+    },
+    "转": {
+      "pinyin": "zhuǎn/zhuàn/zhuǎi",
+      "meaning": "turn, transfer, transform, revolve",
+      "components": ["car (车)", "alone (专)"],
+      "story": "Car turning on its own axis — rotation, transformation",
+      "commonWords": ["转化", "转移", "转变", "旋转", "周转"],
+      "svgAnimation": "gearsTurning"
+    },
+    "过": {
+      "pinyin": "guò/guō/guo",
+      "meaning": "pass, cross, exceed, process, mistake",
+      "components": ["walk (辶)", "criterion (咼)"],
+      "story": "Walking past the standard — crossing the threshold",
+      "commonWords": ["过程", "经过", "通过", "过去", "错误"],
+      "svgAnimation": "pipelineFlow"
+    },
+    "输入": {
+      "pinyin": "shù rù",
+      "meaning": "input (compound)",
+      "components": ["数", "入"],
+      "story": "Data entering the system — the feed of computation",
+      "commonWords": ["输入设备", "输入法", "输入框"],
+      "svgAnimation": "dataIn"
+    },
+    "输出": {
+      "pinyin": "shū chū",
+      "meaning": "output (compound)",
+      "components": ["输", "出"],
+      "story": "Results flowing out — the harvest of computation",
+      "commonWords": ["输出设备", "输出结果", "标准输出"],
+      "svgAnimation": "dataOut"
+    },
+    "算法": {
+      "pinyin": "suàn fǎ",
+      "meaning": "algorithm (compound)",
+      "components": ["算", "法"],
+      "story": "Calculation method — the recipe that turns input into output",
+      "commonWords": ["排序算法", "搜索算法", "加密算法", "机器学习算法"],
+      "svgAnimation": "recipe"
+    },
+    "代码": {
+      "pinyin": "dài mǎ",
+      "meaning": "code (compound)",
+      "components": ["代", "码"],
+      "story": "Generational symbols — code passes logic through generations",
+      "commonWords": ["源代码", "代码审查", "代码规范", "伪代码"],
+      "svgAnimation": "codeFlow"
+    },
+    "数据": {
+      "pinyin": "shù jù",
+      "meaning": "data (compound)",
+      "components": ["数", "据"],
+      "story": "Numbers with evidence — information grounded in fact",
+      "commonWords": ["数据结构", "数据库", "数据分析", "大数据", "数据科学"],
+      "svgAnimation": "dataCrystals"
+    },
+    "结构": {
+      "pinyin": "jié gòu",
+      "meaning": "structure (compound)",
+      "components": ["结", "构"],
+      "story": "Knots constructed — architecture of organized data",
+      "commonWords": ["数据结构", "结构体", "组织结构", "句法结构"],
+      "svgAnimation": "architecture"
+    },
+    "实现": {
+      "pinyin": "shí xiàn",
+      "meaning": "implement, realize (compound)",
+      "components": ["实", "现"],
+      "story": "Reality appearing — turning idea into working code",
+      "commonWords": ["实现功能", "实现算法", "落地实现", "梦想实现"],
+      "svgAnimation": "ideaToReality"
+    },
+    "学习": {
+      "pinyin": "xué xí",
+      "meaning": "learn, study (compound)",
+      "components": ["学", "习"],
+      "story": "Bird practicing flight — learning through repetition",
+      "commonWords": ["学习算法", "机器学习", "深度学习", "学习曲线", "自学"],
+      "svgAnimation": "birdPractice"
+    },
+    "理解": {
+      "pinyin": "lǐ jiě",
+      "meaning": "understand (compound)",
+      "components": ["理", "解"],
+      "story": "Logic untied — clarity through reasoning",
+      "commonWords": ["深度理解", "理解能力", "相互理解", "理解透彻"],
+      "svgAnimation": "lightbulb"
+    },
+    "优化": {
+      "pinyin": "yōu huà",
+      "meaning": "optimize (compound)",
+      "components": ["优", "化"],
+      "story": "Excellence transforming — the alchemy of better code",
+      "commonWords": ["性能优化", "代码优化", "优化算法", "查询优化"],
+      "svgAnimation": "polishing"
+    },
+    "选择": {
+      "pinyin": "xuǎn zé",
+      "meaning": "choose, select (compound)",
+      "components": ["选", "择"],
+      "story": "Picking and picking again — deliberate selection",
+      "commonWords": ["选择排序", "选择器", "选择题", "自然选择"],
+      "svgAnimation": "selector"
+    },
+    "遍历": {
+      "pinyin": "biàn lì",
+      "meaning": "traverse, iterate (compound)",
+      "components": ["遍", "历"],
+      "story": "Covering all history — visiting every element once",
+      "commonWords": ["遍历数组", "遍历树", "深度遍历", "广度遍历"],
+      "svgAnimation": "meshWalk"
+    }
+  }
+}
