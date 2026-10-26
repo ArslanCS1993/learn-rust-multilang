@@ -42,6 +42,40 @@
         ::-webkit-scrollbar-thumb { background: #2b2f45; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
 
+        /* Resizable Splitter */
+        .splitter {
+            width: 6px;
+            background: linear-gradient(180deg, transparent, #3b82f6/30, transparent);
+            cursor: col-resize;
+            flex-shrink: 0;
+            z-index: 50;
+            transition: background 0.2s;
+        }
+        .splitter:hover, .splitter.dragging {
+            background: linear-gradient(180deg, transparent, #3b82f6, transparent);
+            box-shadow: 0 0 8px #3b82f6/50;
+        }
+        .splitter::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 40px;
+            background: #3b82f6/60;
+            border-radius: 2px;
+        }
+        .splitter:hover::before, .splitter.dragging::before {
+            background: #3b82f6;
+            height: 60px;
+        }
+
+        /* Panel width transition */
+        .resizable-panel {
+            transition: width 0.1s ease-out;
+        }
+
         /* Compound Word Wrapper */
         .hz-word-group {
             display: inline-flex;
@@ -133,7 +167,7 @@
     <main class="flex-1 flex overflow-hidden relative">
         
         <!-- Left Reading Section -->
-        <section class="w-1/2 flex flex-col border-r border-slate-800/80 bg-darkBg relative">
+        <section id="leftPanel" class="resizable-panel flex flex-col border-r border-slate-800/80 bg-darkBg relative" style="width: 50%; min-width: 300px; max-width: 80%;">
             <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-book-open text-blue-400"></i>
@@ -167,8 +201,11 @@
             </div>
         </section>
 
+        <!-- Resizable Splitter -->
+        <div id="splitter" class="splitter relative" title="Drag to resize panels"></div>
+
         <!-- Right Side Breakdown & Visual Panel -->
-        <section class="w-1/2 flex flex-col bg-panelBg overflow-hidden">
+        <section id="rightPanel" class="resizable-panel flex flex-col bg-panelBg overflow-hidden" style="width: 50%; min-width: 300px; max-width: 80%;">
             
             <!-- Quick Dictionary Search & Audio Bar -->
             <div class="p-4 border-b border-slate-800/80 bg-panelBg/80 flex gap-3 items-center">
@@ -207,11 +244,11 @@
                     </div>
 
                     <!-- Emoji Visual Display -->
-                    <div class="mt-5 border border-slate-700/60 rounded-2xl bg-darkBg/80 p-5 flex flex-col items-center justify-center relative min-h-[160px]">
-                        <div id="emojiDisplay" class="text-8xl md:text-9xl lg:text-[10rem] flex justify-center items-center animate-bounce" style="line-height: 1;">
+                    <div class="mt-5 border border-slate-700/60 rounded-2xl bg-darkBg/80 p-4 flex flex-col items-center justify-center relative min-h-[80px]">
+                        <div id="emojiDisplay" class="text-5xl md:text-6xl lg:text-7xl flex justify-center items-center animate-bounce" style="line-height: 1;">
                             🧮
                         </div>
-                        <span id="emojiLabel" class="text-xs text-slate-500 mt-2 font-mono tracking-wide">Visual Concept</span>
+                        <span id="emojiLabel" class="text-xs text-slate-500 mt-1 font-mono tracking-wide">Visual Concept</span>
                     </div>
 
                     <!-- Nested Character Breakdown Section (Addresses Feedback) -->
@@ -914,6 +951,85 @@
             document.getElementById('speakFullBtn').addEventListener('click', () => {
                 const text = window.getSelection().toString() || defaultSampleText;
                 speakChinese(text);
+            });
+
+            // Resizable Splitter
+            const splitter = document.getElementById('splitter');
+            const leftPanel = document.getElementById('leftPanel');
+            const rightPanel = document.getElementById('rightPanel');
+            let isDragging = false;
+
+            splitter.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                splitter.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const containerRect = document.querySelector('main').getBoundingClientRect();
+                const offsetX = e.clientX - containerRect.left;
+                const totalWidth = containerRect.width;
+                
+                // Calculate percentages with min/max constraints
+                const minWidthPx = 300;
+                const maxPercent = 80;
+                const minPercent = (minWidthPx / totalWidth) * 100;
+                
+                let leftPercent = (offsetX / totalWidth) * 100;
+                leftPercent = Math.max(minPercent, Math.min(maxPercent, leftPercent));
+                const rightPercent = 100 - leftPercent;
+                
+                leftPanel.style.width = `${leftPercent}%`;
+                rightPanel.style.width = `${rightPercent}%`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    splitter.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
+
+            // Touch support for mobile
+            splitter.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                splitter.classList.add('dragging');
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                
+                const touch = e.touches[0];
+                const containerRect = document.querySelector('main').getBoundingClientRect();
+                const offsetX = touch.clientX - containerRect.left;
+                const totalWidth = containerRect.width;
+                
+                const minWidthPx = 300;
+                const maxPercent = 80;
+                const minPercent = (minWidthPx / totalWidth) * 100;
+                
+                let leftPercent = (offsetX / totalWidth) * 100;
+                leftPercent = Math.max(minPercent, Math.min(maxPercent, leftPercent));
+                const rightPercent = 100 - leftPercent;
+                
+                leftPanel.style.width = `${leftPercent}%`;
+                rightPanel.style.width = `${rightPercent}%`;
+            }, { passive: false });
+
+            document.addEventListener('touchend', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    splitter.classList.remove('dragging');
+                    document.body.style.userSelect = '';
+                }
             });
         });
     </script>
