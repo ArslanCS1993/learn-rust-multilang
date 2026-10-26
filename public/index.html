@@ -84,6 +84,12 @@
             font-weight: 700;
             box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
         }
+        .hz-char.nav-focused {
+            outline: 2px solid #06b6d4;
+            outline-offset: 2px;
+            background-color: rgba(6, 182, 212, 0.2);
+            z-index: 10;
+        }
 
         /* Pinyin Ruby Annotation Styling */
         rt {
@@ -149,7 +155,7 @@
             <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-book-open text-blue-400"></i>
-                    <span>Source Text (Click a character to see its word, click again for character details)</span>
+                    <span>Source Text (←/→ arrows to navigate, click for word, click again for character)</span>
                 </div>
                 <button id="speakFullBtn" class="hover:text-blue-400 transition flex items-center gap-1" title="Read aloud">
                     <i class="fa-solid fa-volume-high text-xs"></i> Speak Passage
@@ -404,6 +410,8 @@
         let activeCharSpan = null;
         let lastClickedChar = null; // Track last clicked char for drill-down
         let lastParentWord = null;  // Track parent word for drill-down
+        let navigableChars = [];    // All character spans in reading order
+        let currentNavIndex = -1;   // Current keyboard navigation index
 
         // SVG Animation Generator
         function generateAnimatedSVG(type) {
@@ -476,6 +484,7 @@
         function renderReadingContent(rawText) {
             const container = document.getElementById('readingContainer');
             container.innerHTML = '';
+            navigableChars = []; // Reset navigation array
 
             const paragraphs = rawText.split('\n');
 
@@ -509,15 +518,21 @@
                             const char = matchedPhrase[cIdx];
                             const charSpan = createCharSpan(char, matchedPhrase);
                             wordSpan.appendChild(charSpan);
+                            navigableChars.push({ span: charSpan, char, parentWord: matchedPhrase, isInWord: true });
                         }
 
                         // Word-level click listener - clicking the word group shows the compound word
                         wordSpan.addEventListener('click', (e) => {
                             e.stopPropagation();
                             clearActiveHighlights();
+                            clearNavFocus();
                             wordSpan.classList.add('word-active');
                             activeWordSpan = wordSpan;
                             updateDictionaryPanel(matchedPhrase, null);
+                            
+                            // Sync navigation to first character of this word
+                            const firstCharIdx = navigableChars.findIndex(item => item.parentWord === matchedPhrase);
+                            if (firstCharIdx !== -1) currentNavIndex = firstCharIdx;
                         });
 
                         pElem.appendChild(wordSpan);
@@ -533,6 +548,7 @@
                             // Standalone Character Span
                             const charSpan = createCharSpan(char, null);
                             pElem.appendChild(charSpan);
+                            navigableChars.push({ span: charSpan, char, parentWord: null, isInWord: false });
                         }
                         idx++;
                     }
@@ -540,6 +556,9 @@
 
                 container.appendChild(pElem);
             });
+            
+            // Reset navigation index
+            currentNavIndex = -1;
         }
 
         // Helper to Create Individual Character Element
@@ -560,8 +579,13 @@
             span.addEventListener('click', (e) => {
                 e.stopPropagation();
                 clearActiveHighlights();
+                clearNavFocus();
                 span.classList.add('char-active');
                 activeCharSpan = span;
+
+                // Sync navigation index
+                const navIdx = navigableChars.findIndex(item => item.span === span);
+                if (navIdx !== -1) currentNavIndex = navIdx;
 
                 if (parentWord) {
                     // Character is part of a compound word
@@ -593,6 +617,72 @@
             document.querySelectorAll('.hz-word-group.word-active').forEach(el => el.classList.remove('word-active'));
             document.querySelectorAll('.hz-char.char-active').forEach(el => el.classList.remove('char-active'));
         }
+
+        function clearNavFocus() {
+            document.querySelectorAll('.hz-char.nav-focused').forEach(el => el.classList.remove('nav-focused'));
+        }
+
+        function focusCharAtIndex(index) {
+            if (index < 0 || index >= navigableChars.length) return;
+            
+            clearNavFocus();
+            currentNavIndex = index;
+            
+            const navItem = navigableChars[index];
+            navItem.span.classList.add('nav-focused');
+            navItem.span.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            
+            // Update the right panel based on drill-down state
+            if (navItem.parentWord) {
+                // Character is part of a compound word
+                // Check if we're in drill-down mode for this char/word combo
+                if (lastClickedChar === navItem.char && lastParentWord === navItem.parentWord) {
+                    // Show individual character breakdown
+                    updateDictionaryPanel(navItem.parentWord, navItem.char);
+                } else {
+                    // Show parent word
+                    updateDictionaryPanel(navItem.parentWord, null);
+                }
+            } else {
+                // Standalone character
+                updateDictionaryPanel(navItem.char, navItem.char);
+            }
+        }
+
+        function navigateLeft() {
+            if (navigableChars.length === 0) return;
+            let newIndex = currentNavIndex - 1;
+            if (newIndex < 0) newIndex = navigableChars.length - 1; // Wrap to end
+            focusCharAtIndex(newIndex);
+        }
+
+        function navigateRight() {
+            if (navigableChars.length === 0) return;
+            let newIndex = currentNavIndex + 1;
+            if (newIndex >= navigableChars.length) newIndex = 0; // Wrap to start
+            focusCharAtIndex(newIndex);
+        }
+
+        // Handle keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            // Only navigate if not typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateLeft();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateRight();
+            } else if (e.key === 'Enter' || e.key === ' ') {
+                // Enter/Space acts like a click on the focused character
+                e.preventDefault();
+                if (currentNavIndex >= 0 && currentNavIndex < navigableChars.length) {
+                    const navItem = navigableChars[currentNavIndex];
+                    navItem.span.click();
+                }
+            }
+        });
 
         // Update Dictionary & Breakdown Display
         function updateDictionaryPanel(phraseOrChar, focusedChar) {
