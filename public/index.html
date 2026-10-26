@@ -277,23 +277,23 @@
 
         // Single Character Dictionary Entry Fallbacks & Database
         const singleCharDB = {
-            "算": { pinyin: "suàn", english: "Calculate; compute; figure", radical: "竹 (Bamboo)", emoji: "🧮" },
-            "法": { pinyin: "fǎ", english: "Method; way; law; rule", radical: "氵 (Water)", emoji: "⚖️" },
-            "计": { pinyin: "jì", english: "Count; compute; plan", radical: "讠 (Speech)", emoji: "⏱️" },
-            "机": { pinyin: "jī", english: "Machine; trigger; opportunity", radical: "木 (Wood)", emoji: "⚙️" },
-            "代": { pinyin: "dài", english: "Replace; code; era", radical: "亻 (Man)", emoji: "🔄" },
-            "码": { pinyin: "mǎ", english: "Number; symbol; code", radical: "石 (Stone)", emoji: "🏷️" },
-            "神": { pinyin: "shén", english: "Spirit; god; mystical; divine", radical: "礻 (Spirit)", emoji: "✨" },
-            "秘": { pinyin: "mì", english: "Secret; mysterious; confidential", radical: "禾 (Grain)", emoji: "🔮" },
-            "数": { pinyin: "shù", english: "Number; figure; count", radical: "攵 (Rapping)", emoji: "🔢" },
-            "据": { pinyin: "jù", english: "According to; proof; base", radical: "扌 (Hand)", emoji: "📄" },
-            "输": { pinyin: "shū", english: "Transport; convey; enter", radical: "车 (Cart)", emoji: "🚚" },
-            "入": { pinyin: "rù", english: "Enter; input; join", radical: "入 (Enter)", emoji: "📥" },
-            "出": { pinyin: "chū", english: "Exit; output; produce", radical: "凵 (Container)", emoji: "📤" },
-            "包": { pinyin: "bāo", english: "Wrap; package; bundle", radical: "勹 (Wrap)", emoji: "📦" },
-            "装": { pinyin: "zhuāng", english: "Dress; equip; install; pack", radical: "衣 (Clothes)", emoji: "👔" },
-            "过": { pinyin: "guò", english: "Pass; cross; process", radical: "辶 (Walk)", emoji: "🚶" },
-            "程": { pinyin: "chéng", english: "Rule; order; journey", radical: "禾 (Grain)", emoji: "📐" }
+            "算": { pinyin: "suàn", english: "Calculate; compute; figure", radical: "竹 (Bamboo)", emoji: "🧮", svgType: "calculate" },
+            "法": { pinyin: "fǎ", english: "Method; way; law; rule", radical: "氵 (Water)", emoji: "⚖️", svgType: "balance" },
+            "计": { pinyin: "jì", english: "Count; compute; plan", radical: "讠 (Speech)", emoji: "⏱️", svgType: "counter" },
+            "机": { pinyin: "jī", english: "Machine; trigger; opportunity", radical: "木 (Wood)", emoji: "⚙️", svgType: "gear" },
+            "代": { pinyin: "dài", english: "Replace; code; era", radical: "亻 (Man)", emoji: "🔄", svgType: "swap" },
+            "码": { pinyin: "mǎ", english: "Number; symbol; code", radical: "石 (Stone)", emoji: "🏷️", svgType: "code" },
+            "神": { pinyin: "shén", english: "Spirit; god; mystical; divine", radical: "礻 (Spirit)", emoji: "✨", svgType: "sparkle" },
+            "秘": { pinyin: "mì", english: "Secret; mysterious; confidential", radical: "禾 (Grain)", emoji: "🔮", svgType: "magic" },
+            "数": { pinyin: "shù", english: "Number; figure; count", radical: "攵 (Rapping)", emoji: "🔢", svgType: "numbers" },
+            "据": { pinyin: "jù", english: "According to; proof; base", radical: "扌 (Hand)", emoji: "📄", svgType: "document" },
+            "输": { pinyin: "shū", english: "Transport; convey; enter", radical: "车 (Cart)", emoji: "🚚", svgType: "transport" },
+            "入": { pinyin: "rù", english: "Enter; input; join", radical: "入 (Enter)", emoji: "📥", svgType: "input" },
+            "出": { pinyin: "chū", english: "Exit; output; produce", radical: "凵 (Container)", emoji: "📤", svgType: "output" },
+            "包": { pinyin: "bāo", english: "Wrap; package; bundle", radical: "勹 (Wrap)", emoji: "📦", svgType: "package" },
+            "装": { pinyin: "zhuāng", english: "Dress; equip; install; pack", radical: "衣 (Clothes)", emoji: "👔", svgType: "install" },
+            "过": { pinyin: "guò", english: "Pass; cross; process", radical: "辶 (Walk)", emoji: "🚶", svgType: "path" },
+            "程": { pinyin: "chéng", english: "Rule; order; journey", radical: "禾 (Grain)", emoji: "📐", svgType: "ruler" }
         };
 
         // Phrase / Word Dictionary
@@ -470,6 +470,151 @@
                         <path d="M50 18 L82 34 L50 50 L18 34 Z" fill="#24283b" stroke="#3b82f6" stroke-width="3" class="anim-float"/>
                         <path d="M18 34 V66 L50 82 V50 Z" fill="#1c1f2e" stroke="#3b82f6" stroke-width="3"/>
                         <path d="M82 34 V66 L50 82 V50 Z" fill="#151720" stroke="#8b5cf6" stroke-width="3"/>
+                    </svg>`;
+                case 'calculate':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="20" y="30" width="60" height="40" rx="6" stroke="#3b82f6" stroke-width="3" fill="#151720"/>
+                        <text x="50" y="52" text-anchor="middle" font-size="18" fill="#06b6d4" class="anim-pulse">∑</text>
+                        <path d="M30 55 L45 70 L70 35" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="anim-float" style="animation-delay: 0.2s;"/>
+                    </svg>`;
+                case 'balance':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M50 15 V45 M35 45 L65 45" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="35" cy="58" r="12" stroke="#3b82f6" stroke-width="3" fill="#1e1b4b" class="anim-float" style="animation-delay: 0s;"/>
+                        <circle cx="65" cy="58" r="12" stroke="#06b6d4" stroke-width="3" fill="#1e3a5f" class="anim-float" style="animation-delay: 0.5s;"/>
+                        <path d="M35 46 V52 M65 46 V52" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="3 2"/>
+                    </svg>`;
+                case 'counter':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="25" y="25" width="50" height="50" rx="8" stroke="#3b82f6" stroke-width="3" fill="#151720"/>
+                        <text x="50" y="58" text-anchor="middle" font-size="24" fill="#06b6d4" font-weight="bold" class="anim-pulse">0</text>
+                        <circle cx="50" cy="50" r="35" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="10 5" class="anim-spin" style="animation-duration: 8s;"/>
+                    </svg>`;
+                case 'gear':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="22" stroke="#3b82f6" stroke-width="4" fill="#1e1b4b" class="anim-spin" style="animation-duration: 6s;"/>
+                        <circle cx="50" cy="50" r="10" fill="#8b5cf6" opacity="0.5"/>
+                        <g stroke="#06b6d4" stroke-width="3" stroke-linecap="round">
+                            <line x1="50" y1="15" x2="50" y2="28" class="anim-pulse"/>
+                            <line x1="50" y1="72" x2="50" y2="85" class="anim-pulse" style="animation-delay: 0.3s;"/>
+                            <line x1="15" y1="50" x2="28" y2="50" class="anim-pulse" style="animation-delay: 0.6s;"/>
+                            <line x1="72" y1="50" x2="85" y2="50" class="anim-pulse" style="animation-delay: 0.9s;"/>
+                        </g>
+                    </svg>`;
+                case 'swap':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M25 35 L50 10 L75 35" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" class="anim-float"/>
+                        <path d="M25 65 L50 90 L75 65" stroke="#8b5cf6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" class="anim-float" style="animation-delay: 0.5s;"/>
+                        <circle cx="50" cy="50" r="8" fill="#06b6d4" class="anim-pulse"/>
+                    </svg>`;
+                case 'code':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="15" y="15" width="70" height="70" rx="10" stroke="#8b5cf6" stroke-width="3" fill="#151720"/>
+                        <path d="M30 35 L20 45 L30 55" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M70 35 L80 45 L70 55" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="55" y1="32" x2="45" y2="58" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" class="anim-pulse"/>
+                    </svg>`;
+                case 'sparkle':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="25" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="8 4" class="anim-spin" style="animation-duration: 10s;"/>
+                        <g stroke="#fbbf24" stroke-width="3" stroke-linecap="round" class="anim-pulse">
+                            <line x1="50" y1="12" x2="50" y2="22"/>
+                            <line x1="50" y1="78" x2="50" y2="88"/>
+                            <line x1="12" y1="50" x2="22" y2="50"/>
+                            <line x1="78" y1="50" x2="88" y2="50"/>
+                            <line x1="22" y1="22" x2="32" y2="32"/>
+                            <line x1="68" y1="68" x2="78" y2="78"/>
+                            <line x1="22" y1="78" x2="32" y2="68"/>
+                            <line x1="68" y1="32" x2="78" y2="22"/>
+                        </g>
+                        <circle cx="50" cy="50" r="6" fill="#fbbf24" class="anim-pulse"/>
+                    </svg>`;
+                case 'magic':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="28" stroke="#8b5cf6" stroke-width="3" fill="#1e1b4b" class="anim-pulse"/>
+                        <circle cx="50" cy="50" r="18" fill="#a78bfa" opacity="0.3" class="anim-float"/>
+                        <path d="M50 12 V22 M50 78 V88 M12 50 H22 M78 50 H88" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" class="anim-spin"/>
+                    </svg>`;
+                case 'numbers':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <text x="30" y="55" text-anchor="middle" font-size="28" fill="#3b82f6" font-weight="bold" class="anim-float" style="animation-delay: 0s;">1</text>
+                        <text x="50" y="45" text-anchor="middle" font-size="32" fill="#06b6d4" font-weight="bold" class="anim-float" style="animation-delay: 0.2s;">0</text>
+                        <text x="70" y="55" text-anchor="middle" font-size="28" fill="#8b5cf6" font-weight="bold" class="anim-float" style="animation-delay: 0.4s;">1</text>
+                        <rect x="20" y="65" width="60" height="4" rx="2" fill="#1e1b4b">
+                            <animate attributeName="width" values="0;60;0" dur="2s" repeatCount="indefinite"/>
+                        </rect>
+                    </svg>`;
+                case 'document':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M25 20 L75 20 L85 30 L85 80 L15 80 L15 30 Z" fill="#1c1f2e" stroke="#3b82f6" stroke-width="3"/>
+                        <line x1="35" y1="40" x2="65" y2="40" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" class="anim-pulse"/>
+                        <line x1="35" y1="52" x2="55" y2="52" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" class="anim-pulse" style="animation-delay: 0.3s;"/>
+                        <line x1="35" y1="64" x2="60" y2="64" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" class="anim-pulse" style="animation-delay: 0.6s;"/>
+                    </svg>`;
+                case 'transport':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M20 60 L30 60 L35 50 L65 50 L70 60 L80 60" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="#1c1f2e" class="anim-float"/>
+                        <circle cx="38" cy="60" r="8" stroke="#8b5cf6" stroke-width="3" fill="#1e1b4b" class="anim-spin" style="animation-duration: 2s;"/>
+                        <circle cx="62" cy="60" r="8" stroke="#06b6d4" stroke-width="3" fill="#1e3a5f" class="anim-spin" style="animation-duration: 2s; animation-direction: reverse;"/>
+                        <path d="M45 50 L45 35 L55 35 L55 50" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="anim-pulse"/>
+                    </svg>`;
+                case 'input':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="30" y="25" width="40" height="50" rx="6" stroke="#3b82f6" stroke-width="3" fill="#151720"/>
+                        <path d="M50 35 V55 M40 45 H60" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" class="anim-pulse"/>
+                        <path d="M20 50 L30 50 M70 50 L80 50" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round">
+                            <animate attributeName="stroke-dashoffset" values="0;20;0" dur="1.5s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>`;
+                case 'output':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="30" y="25" width="40" height="50" rx="6" stroke="#8b5cf6" stroke-width="3" fill="#151720"/>
+                        <path d="M50 35 V55 M40 45 H60" stroke="#fbbf24" stroke-width="4" stroke-linecap="round" class="anim-pulse"/>
+                        <path d="M20 50 L30 50 M70 50 L80 50" stroke="#3b82f6" stroke-width="3" stroke-linecap="round">
+                            <animate attributeName="stroke-dashoffset" values="0;-20;0" dur="1.5s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>`;
+                case 'install':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="25" y="25" width="50" height="50" rx="8" stroke="#3b82f6" stroke-width="3" fill="#1c1f2e"/>
+                        <path d="M35 50 L45 60 L65 40" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" class="anim-pulse"/>
+                        <circle cx="50" cy="50" r="22" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="8 4" class="anim-spin" style="animation-duration: 8s;"/>
+                    </svg>`;
+                case 'path':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <path d="M15 50 Q35 20 50 50 T85 50" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round" class="anim-float"/>
+                        <circle cx="50" cy="50" r="6" fill="#06b6d4" class="anim-pulse">
+                            <animateMotion path="M15 50 Q35 20 50 50 T85 50" dur="4s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>`;
+                case 'ruler':
+                    return `
+                    <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                        <rect x="20" y="40" width="60" height="20" rx="3" fill="#1c1f2e" stroke="#3b82f6" stroke-width="2"/>
+                        <g stroke="#06b6d4" stroke-width="2" stroke-linecap="round">
+                            <line x1="25" y1="40" x2="25" y2="55" class="anim-pulse" style="animation-delay: 0s;"/>
+                            <line x1="35" y1="40" x2="35" y2="50" class="anim-pulse" style="animation-delay: 0.1s;"/>
+                            <line x1="45" y1="40" x2="45" y2="55" class="anim-pulse" style="animation-delay: 0.2s;"/>
+                            <line x1="55" y1="40" x2="55" y2="50" class="anim-pulse" style="animation-delay: 0.3s;"/>
+                            <line x1="65" y1="40" x2="65" y2="55" class="anim-pulse" style="animation-delay: 0.4s;"/>
+                            <line x1="75" y1="40" x2="75" y2="50" class="anim-pulse" style="animation-delay: 0.5s;"/>
+                        </g>
+                        <path d="M35 35 L50 20 L65 35" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                     </svg>`;
                 default:
                     return `
@@ -706,9 +851,10 @@
             document.getElementById('targetEmoji').textContent = focusedChar ? (displayEntry.emoji || '🔤') : entry.emoji;
             document.getElementById('contextSentence').textContent = entry.context || `Usage in context.`;
 
-            // Render Animated SVG
+            // Render Animated SVG - use character's svgType for individual characters, word's svgType for compounds
             const svgContainer = document.getElementById('svgContainer');
-            svgContainer.innerHTML = generateAnimatedSVG(entry.svgType || 'default');
+            const svgType = focusedChar ? (displayEntry.svgType || 'default') : (entry.svgType || 'default');
+            svgContainer.innerHTML = generateAnimatedSVG(svgType);
             document.getElementById('svgCaption').textContent = `Visual Concept: ${targetHanzi}`;
 
             // Render Individual Character Breakdown Cards
