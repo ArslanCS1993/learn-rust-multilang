@@ -225,6 +225,16 @@
                         </div>
                     </div>
 
+                    <!-- Words Containing This Character (for single char view) -->
+                    <div id="charWordsSection" class="mt-6 pt-5 border-t border-slate-800 hidden">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-link text-green-400"></i> Words Containing This Character
+                        </h4>
+                        <div id="charWordsContainer" class="space-y-2">
+                            <!-- Populated dynamically when viewing single character -->
+                        </div>
+                    </div>
+
                     <!-- Related Words & Compounds -->
                     <div class="mt-6 pt-5 border-t border-slate-800">
                         <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -259,23 +269,123 @@
 
         // Single Character Dictionary Entry Fallbacks & Database
         const singleCharDB = {
-            "算": { pinyin: "suàn", english: "Calculate; compute; figure", radical: "竹 (Bamboo)", emoji: "🧮" },
-            "法": { pinyin: "fǎ", english: "Method; way; law; rule", radical: "氵 (Water)", emoji: "⚖️" },
-            "计": { pinyin: "jì", english: "Count; compute; plan", radical: "讠 (Speech)", emoji: "⏱️" },
-            "机": { pinyin: "jī", english: "Machine; trigger; opportunity", radical: "木 (Wood)", emoji: "⚙️" },
-            "代": { pinyin: "dài", english: "Replace; code; era", radical: "亻 (Man)", emoji: "🔄" },
-            "码": { pinyin: "mǎ", english: "Number; symbol; code", radical: "石 (Stone)", emoji: "🏷️" },
-            "神": { pinyin: "shén", english: "Spirit; god; mystical; divine", radical: "礻 (Spirit)", emoji: "✨" },
-            "秘": { pinyin: "mì", english: "Secret; mysterious; confidential", radical: "禾 (Grain)", emoji: "🔮" },
-            "数": { pinyin: "shù", english: "Number; figure; count", radical: "攵 (Rapping)", emoji: "🔢" },
-            "据": { pinyin: "jù", english: "According to; proof; base", radical: "扌 (Hand)", emoji: "📄" },
-            "输": { pinyin: "shū", english: "Transport; convey; enter", radical: "车 (Cart)", emoji: "🚚" },
-            "入": { pinyin: "rù", english: "Enter; input; join", radical: "入 (Enter)", emoji: "📥" },
-            "出": { pinyin: "chū", english: "Exit; output; produce", radical: "凵 (Container)", emoji: "📤" },
-            "包": { pinyin: "bāo", english: "Wrap; package; bundle", radical: "勹 (Wrap)", emoji: "📦" },
-            "装": { pinyin: "zhuāng", english: "Dress; equip; install; pack", radical: "衣 (Clothes)", emoji: "👔" },
-            "过": { pinyin: "guò", english: "Pass; cross; process", radical: "辶 (Walk)", emoji: "🚶" },
-            "程": { pinyin: "chéng", english: "Rule; order; journey", radical: "禾 (Grain)", emoji: "📐" }
+            "一": { pinyin: "yī", english: "One; first; whole; single", radical: "一 (One)", emoji: "1️⃣", words: ["一步", "一个", "一步接一步", "简单"] },
+            "上": { pinyin: "shàng", english: "Up; on; above; last", radical: "一 (One)", emoji: "⬆️", words: ["上执行", "以上", "简单点说"] },
+            "与": { pinyin: "yǔ", english: "And; with; give; together", radical: "一 (One)", emoji: "🔗", words: ["与算法", "交道"] },
+            "个": { pinyin: "gè", english: "Individual; measure word; piece", radical: "丨 (Stick)", emoji: "🧍", words: ["一个", "绝大部分"] },
+            "中": { pinyin: "zhōng", english: "Middle; center; in; China", radical: "口 (Mouth)", emoji: "🎯", words: ["其中", "库中", "过程"] },
+            "为": { pinyin: "wéi", english: "For; do; act as; become", radical: "火 (Fire)", emoji: "🤝", words: ["作为", "为所", "引出了"] },
+            "么": { pinyin: "me", english: "Question particle; what", radical: "么 (Interrogative)", emoji: "❓", words: ["那些", "什么", "怎么"] },
+            "义": { pinyin: "yì", english: "Meaning; righteousness; justice", radical: "羊 (Sheep)", emoji: "📖", words: ["定义", "意义"] },
+            "也": { pinyin: "yě", english: "Also; too; as well", radical: "乙 (Second)", emoji: "♊", words: ["也是", "也是"] },
+            "些": { pinyin: "xiē", english: "Some; few; these", radical: "二 (Two)", emoji: "🔹", words: ["这些", "那些"] },
+            "交": { pinyin: "jiāo", english: "Exchange; cross; interact", radical: "亻 (Man)", emoji: "🔀", words: ["交道", "打交道"] },
+            "人": { pinyin: "rén", english: "Person; human; people", radical: "人 (Man)", emoji: "🧑", words: ["凡人", "人工", "人类"] },
+            "代": { pinyin: "dài", english: "Replace; generation; era; code", radical: "亻 (Man)", emoji: "🔄", words: ["代码", "源代码", "编写代码", "时代", "代表"] },
+            "以": { pinyin: "yǐ", english: "By; with; according to; use", radical: "人 (Man)", emoji: "🖊️", words: ["以及", "以上", "以此"] },
+            "们": { pinyin: "men", english: "Plural marker for pronouns", radical: "人 (Man)", emoji: "👥", words: ["我们", "他们", "你们"] },
+            "但": { pinyin: "dàn", english: "But; however; only", radical: "人 (Man)", emoji: "🙅", words: ["但是", "不仅"] },
+            "体": { pinyin: "tǐ", english: "Body; substance; system; style", radical: "骨 (Bone)", emoji: "🏋️", words: ["具体", "主体", "实体"] },
+            "何": { pinyin: "hé", english: "What; how; why; which", radical: "人 (Man)", emoji: "❓", words: ["如何", "为什么", "何时"] },
+            "入": { pinyin: "rù", english: "Enter; input; join; income", radical: "入 (Enter)", emoji: "📥", words: ["输入", "输入法", "进入", "收入"] },
+            "其": { pinyin: "qí", english: "Its; his; her; that", radical: "八 (Eight)", emoji: "📌", words: ["其他", "其实", "其中"] },
+            "具": { pinyin: "jù", english: "Tool; possess; specific; concrete", radical: "八 (Eight)", emoji: "🧰", words: ["具体", "工具", "具备"] },
+            "写": { pinyin: "xiě", english: "Write; compose; draw", radical: "宀 (Roof)", emoji: "✍️", words: ["编写代码", "写代码", "书写"] },
+            "凡": { pinyin: "fán", english: "Ordinary; mortal; common", radical: "几 (Table)", emoji: "🧍", words: ["凡人", "平凡", "非凡"] },
+            "出": { pinyin: "chū", english: "Exit; output; produce; go out", radical: "凵 (Container)", emoji: "📤", words: ["输出", "输出设备", "出现", "出去", "产出"] },
+            "分": { pinyin: "fēn", english: "Divide; minute; part; score", radical: "八 (Eight)", emoji: "➗", words: ["部分", "分钟", "分析", "分配"] },
+            "到": { pinyin: "dào", english: "Arrive; reach; to; until", radical: "刀 (Knife)", emoji: "🏁", words: ["得到", "到达", "感知到"] },
+            "刻": { pinyin: "kè", english: "Moment; carve; quarter hour", radical: "刀 (Knife)", emoji: "⏳", words: ["无时无刻", "时刻", "刻苦"] },
+            "包": { pinyin: "bāo", english: "Wrap; package; bundle; include", radical: "勹 (Wrap)", emoji: "📦", words: ["包装", "库包装", "包括", "包含"] },
+            "化": { pinyin: "huà", english: "Transform; change; -ize; melt", radical: "人 (Man)", emoji: "🧪", words: ["转化", "化为", "数字化"] },
+            "单": { pinyin: "dān", english: "Simple; single; list; bill", radical: "十 (Ten)", emoji: "📄", words: ["简单", "单一", "单独", "简单"] },
+            "即": { pinyin: "jí", english: "Immediately; namely; even if", radical: "卩 (Seal)", emoji: "⚡", words: ["即可", "即使", "即时"] },
+            "只": { pinyin: "zhǐ", english: "Only; just; single", radical: "口 (Mouth)", emoji: "☝️", words: ["只是", "只能", "只有"] },
+            "可": { pinyin: "kě", english: "Can; may; possible; approve", radical: "口 (Mouth)", emoji: "✅", words: ["可以", "可能", "即可"] },
+            "因": { pinyin: "yīn", english: "Cause; because; reason", radical: "囗 (Enclosure)", emoji: "⚡", words: ["因为", "因此", "原因", "因果"] },
+            "在": { pinyin: "zài", english: "At; in; exist; be located", radical: "土 (Earth)", emoji: "📍", words: ["在", "存在", "位于", "进行中"] },
+            "地": { pinyin: "de", english: "Structural particle; -ly", radical: "土 (Earth)", emoji: "📍", words: ["地", "地方", "地位", "详细地"] },
+            "域": { pinyin: "yù", english: "Domain; region; territory", radical: "土 (Earth)", emoji: "🌐", words: ["领域", "域名", "范围"] },
+            "基": { pinyin: "jī", english: "Base; foundation; basic; fundamental", radical: "土 (Earth)", emoji: "🏗️", words: ["基本", "基础", "基于"] },
+            "大": { pinyin: "dà", english: "Big; large; great; major", radical: "大 (Big)", emoji: "🐘", words: ["大数据", "大小", "大部分", "大学"] },
+            "好": { pinyin: "hǎo", english: "Good; well; nice; easy", radical: "女 (Woman)", emoji: "👍", words: ["好", "很好", "好处", "好像"] },
+            "如": { pinyin: "rú", english: "If; like; as; such as", radical: "女 (Woman)", emoji: "🤷", words: ["如果", "如何", "如下", "比如"] },
+            "它": { pinyin: "tā", english: "It; its; other", radical: "宀 (Roof)", emoji: "🐻", words: ["它", "其他", "其它"] },
+            "定": { pinyin: "dìng", english: "Fixed; decide; calm; set", radical: "宀 (Roof)", emoji: "🔒", words: ["定义", "决定", "一定", "基本定义"] },
+            "实": { pinyin: "shí", english: "Real; solid; true; fact", radical: "宀 (Roof)", emoji: "💎", words: ["其实", "实际", "实现", "具体"] },
+            "容": { pinyin: "róng", english: "Contain; tolerate; appearance", radical: "宀 (Roof)", emoji: "📦", words: ["容易", "内容", "容器", "包容"] },
+            "对": { pinyin: "duì", english: "Right; correct; pair; for", radical: "寸 (Inch)", emoji: "✔️", words: ["对于", "对比", "正确", "输入输出"] },
+            "将": { pinyin: "jiāng", english: "Will; going to; take; general", radical: "寸 (Inch)", emoji: "🎯", words: ["将", "把", "将来"] },
+            "就": { pinyin: "jiù", english: "Just; then; approach; about", radical: "尢 (Lame)", emoji: "➡️", words: ["就是", "就", "就要"] },
+            "已": { pinyin: "yǐ", english: "Already; finished; stop", radical: "己 (Self)", emoji: "✅", words: ["已经", "已知", "以来"] },
+            "库": { pinyin: "kù", english: "Warehouse; library; depot", radical: "广 (Building)", emoji: "🏪", words: ["库包装", "数据库", "库中", "函数库"] },
+            "度": { pinyin: "dù", english: "Degree; extent; limit; save", radical: "广 (Building)", emoji: "📏", words: ["程度", "速度", "温度", "百度"] },
+            "式": { pinyin: "shì", english: "Style; format; formula; ceremony", radical: "工 (Work)", emoji: "📋", words: ["方式", "公式", "格式", "样式"] },
+            "引": { pinyin: "yǐn", english: "Lead; cite; quote; attract", radical: "弓 (Bow)", emoji: "🔗", words: ["引出", "引用", "引导", "引出了"] },
+            "很": { pinyin: "hěn", english: "Very; quite; much", radical: "彳 (Step)", emoji: "💯", words: ["很", "很好", "非常", "那些"] },
+            "忌": { pinyin: "jì", english: "Taboo; avoid; jealousy", radical: "心 (Heart)", emoji: "😱", words: ["禁忌", "忌讳", "忌惮"] },
+            "感": { pinyin: "gǎn", english: "Feel; sense; emotion; gratitude", radical: "心 (Heart)", emoji: "❤️", words: ["神秘感", "感觉", "感知", "感谢"] },
+            "我": { pinyin: "wǒ", english: "I; me; my; we", radical: "手 (Hand)", emoji: "🙋", words: ["我们", "我", "自我"] },
+            "或": { pinyin: "huò", english: "Or; either; perhaps; maybe", radical: "戈 (Weapon)", emoji: "❓", words: ["或者", "或许", "或是"] },
+            "打": { pinyin: "dǎ", english: "Hit; strike; do; make", radical: "手 (Hand)", emoji: "👊", words: ["打交道", "打开", "打破", "打算"] },
+            "执": { pinyin: "zhí", english: "Hold; execute; persist; implement", radical: "扌 (Hand)", emoji: "🤲", words: ["执行过程", "执行", "执着"] },
+            "据": { pinyin: "jù", english: "Evidence; basis; according to", radical: "扌 (Hand)", emoji: "📄", words: ["数据", "根据", "依据", "据点"] },
+            "接": { pinyin: "jiē", english: "Connect; receive; catch; meet", radical: "手 (Hand)", emoji: "🤝", words: ["接一步", "接口", "接受", "连接"] },
+            "描": { pinyin: "miáo", english: "Describe; depict; trace; copy", radical: "手 (Hand)", emoji: "✏️", words: ["描述", "描绘", "描写"] },
+            "摘": { pinyin: "zhāi", english: "Pick; pluck; excerpt; abstract", radical: "手 (Hand)", emoji: "🌿", words: ["摘抄", "摘要", "摘录"] },
+            "数": { pinyin: "shù", english: "Number; figure; count; data", radical: "攵 (Rapping)", emoji: "🔢", words: ["数据", "数据库", "大数据", "数字", "数学", "数码"] },
+            "方": { pinyin: "fāng", english: "Way; method; square; direction", radical: "方 (Square)", emoji: "🧭", words: ["方式", "方法", "方向", "方面"] },
+            "无": { pinyin: "wú", english: "Without; no; not; nothing", radical: "无 (Nothing)", emoji: "🌌", words: ["无时无刻", "无法", "无所谓", "无限"] },
+            "时": { pinyin: "shí", english: "Time; hour; moment; when", radical: "日 (Sun)", emoji: "🕐", words: ["时", "时间", "时候", "时刻"] },
+            "是": { pinyin: "shì", english: "Be; yes; right; this", radical: "日 (Sun)", emoji: "🟰", words: ["是", "是的", "确实", "是不是"] },
+            "本": { pinyin: "běn", english: "Root; origin; book; this", radical: "木 (Wood)", emoji: "📚", words: ["基本", "本来", "本身", "基本来"] },
+            "机": { pinyin: "jī", english: "Machine; trigger; opportunity", radical: "木 (Wood)", emoji: "⚙️", words: ["微型计算机", "计算机", "计算机科学", "计算机算法", "机器", "机会", "手机"] },
+            "来": { pinyin: "lái", english: "Come; future; since; arrive", radical: "木 (Wood)", emoji: "🚀", words: ["来", "未来", "过来", "以来"] },
+            "此": { pinyin: "cǐ", english: "This; here; now", radical: "止 (Stop)", emoji: "👈", words: ["这些", "此处", "此外", "因此"] },
+            "步": { pinyin: "bù", english: "Step; pace; walk; procedure", radical: "止 (Stop)", emoji: "👣", words: ["一步", "步骤", "步骤", "进步"] },
+            "求": { pinyin: "qiú", english: "Seek; request; demand; require", radical: "水 (Water)", emoji: "🙏", words: ["要求", "请求", "追求", "所要求"] },
+            "汇": { pinyin: "huì", english: "Converge; vocabulary; exchange", radical: "水 (Water)", emoji: "🌊", words: ["汇", "汇总", "汇集", "词汇"] },
+            "没": { pinyin: "méi", english: "Not have; not; sink", radical: "水 (Water)", emoji: "🈚", words: ["没有", "没那些", "没用"] },
+            "法": { pinyin: "fǎ", english: "Method; way; law; rule", radical: "氵 (Water)", emoji: "⚖️", words: ["排序算法", "算法", "计算机算法", "输入法", "方法", "法律", "法则"] },
+            "点": { pinyin: "diǎn", english: "Point; dot; o'clock; idea", radical: "火 (Fire)", emoji: "💡", words: ["简单点说", "点", "点击", "关键点"] },
+            "用": { pinyin: "yòng", english: "Use; employ; useful; expense", radical: "用 (Use)", emoji: "🛠️", words: ["使用", "用户", "用途", "调用"] },
+            "百": { pinyin: "bǎi", english: "Hundred; many; all", radical: "白 (White)", emoji: "💯", words: ["百度", "百科", "百度百科", "一百"] },
+            "知": { pinyin: "zhī", english: "Know; knowledge; aware", radical: "矢 (Arrow)", emoji: "🧠", words: ["知道", "知识", "知晓", "感知"] },
+            "码": { pinyin: "mǎ", english: "Number; symbol; code; yard", radical: "石 (Stone)", emoji: "🏷️", words: ["代码", "源代码", "编写代码", "密码", "数码"] },
+            "神": { pinyin: "shén", english: "Spirit; god; divine; magical", radical: "礻 (Spirit)", emoji: "✨", words: ["神秘", "神秘感", "神秘莫测", "精神", "神奇"] },
+            "禁": { pinyin: "jìn", english: "Forbid; prohibit; ban", radical: "示 (Spirit)", emoji: "🚫", words: ["禁忌", "禁止", "禁令"] },
+            "科": { pinyin: "kē", english: "Science; subject; department", radical: "禾 (Grain)", emoji: "🔬", words: ["计算机科学", "科学", "科技", "学科"] },
+            "秘": { pinyin: "mì", english: "Secret; mysterious; confidential", radical: "禾 (Grain)", emoji: "🔮", words: ["神秘", "神秘感", "神秘莫测", "秘密", "机密"] },
+            "程": { pinyin: "chéng", english: "Process; procedure; journey; program", radical: "禾 (Grain)", emoji: "📐", words: ["过程", "执行过程", "程序", "工程", "过程"] },
+            "简": { pinyin: "jiǎn", english: "Simple; brief; concise; bamboo", radical: "竹 (Bamboo)", emoji: "📃", words: ["简单", "简单", "简化", "简略"] },
+            "算": { pinyin: "suàn", english: "Calculate; compute; figure", radical: "竹 (Bamboo)", emoji: "🧮", words: ["微型计算机", "排序算法", "算法", "计算机", "计算机科学", "计算机算法", "计算", "算术"] },
+            "细": { pinyin: "xì", english: "Fine; detailed; thin; careful", radical: "糸 (Silk)", emoji: "🔍", words: ["详细", "细节", "细微", "详细描述"] },
+            "绝": { pinyin: "jué", english: "Absolute; cut off; extreme", radical: "糸 (Silk)", emoji: "✂️", words: ["绝对", "绝大部分", "绝对是", "绝不"] },
+            "者": { pinyin: "zhě", english: "Person who; ...er; one who", radical: "耂 (Old)", emoji: "👤", words: ["或者", "执行者", "...者", "学者"] },
+            "而": { pinyin: "ér", english: "And; but; while; however", radical: "而 (And)", emoji: "➰", words: ["而已", "而且", "然而", "并且"] },
+            "自": { pinyin: "zì", english: "Self; own; naturally; since", radical: "自 (Self)", emoji: "🪞", words: ["自己", "自动", "自行", "自学"] },
+            "获": { pinyin: "huò", english: "Obtain; get; capture", radical: "犬 (Dog)", emoji: "🏆", words: ["获得", "获取", "获奖"] },
+            "行": { pinyin: "xíng", english: "Walk; go; OK; row; bank", radical: "彳 (Step)", emoji: "🚶", words: ["执行过程", "执行", "行动", "行走", "银行"] },
+            "被": { pinyin: "bèi", english: "Passive marker; by; quilt", radical: "衣 (Clothes)", emoji: "🧥", words: ["被", "被包装", "被动", "被迫"] },
+            "装": { pinyin: "zhuāng", english: "Install; pack;装备; decorate", radical: "衣 (Clothes)", emoji: "👔", words: ["包装", "库包装", "安装", "装备", "装饰"] },
+            "要": { pinyin: "yào", english: "Want; need; will; important", radical: "西 (West)", emoji: "🔑", words: ["要求", "要", "主要", "需要"] },
+            "计": { pinyin: "jì", english: "Count; compute; plan", radical: "讠 (Speech)", emoji: "⏱️", words: ["微型计算机", "计算机", "计算机科学", "计算机算法", "计算", "计划", "计数"] },
+            "词": { pinyin: "cí", english: "Word; vocabulary; term", radical: "言 (Speech)", emoji: "📝", words: ["词汇", "词语", "单词", "关键词"] },
+            "详": { pinyin: "xiáng", english: "Detailed; thorough; particular", radical: "言 (Speech)", emoji: "📋", words: ["详细", "详述", "详情", "详细描述"] },
+            "说": { pinyin: "shuō", english: "Speak; say; explain; theory", radical: "言 (Speech)", emoji: "💬", words: ["简单点说", "说明", "说法", "说话"] },
+            "调": { pinyin: "tiáo", english: "Adjust; regulate; transfer", radical: "言 (Speech)", emoji: "🎚️", words: ["调用", "调整", "调试", "调节"] },
+            "转": { pinyin: "zhuǎn", english: "Turn; transfer; change; shift", radical: "车 (Cart)", emoji: "🔄", words: ["转化", "转换", "转移", "转变"] },
+            "输": { pinyin: "shū", english: "Transport; input/output; lose", radical: "车 (Cart)", emoji: "🚚", words: ["输入", "输入法", "输出", "输出设备", "输送", "输血"] },
+            "过": { pinyin: "guò", english: "Pass; cross; process; over", radical: "辶 (Walk)", emoji: "🚶", words: ["过程", "通过", "过去", "经过"] },
+            "这": { pinyin: "zhè", english: "This; these; here", radical: "辶 (Walk)", emoji: "👈", words: ["这", "那些", "这样", "这边"] },
+            "述": { pinyin: "shù", english: "Narrate; state; recount", radical: "辶 (Walk)", emoji: "📖", words: ["描述", "叙述", "陈述", "具体描述"] },
+            "道": { pinyin: "dào", english: "Way; path; road; principle", radical: "辶 (Walk)", emoji: "🛤️", words: ["打交道", "道路", "道理", "知道"] },
+            "那": { pinyin: "nà", english: "That; those; then", radical: "邑 (City)", emoji: "👉", words: ["那些", "那么", "那里", "那边"] },
+            "部": { pinyin: "bù", english: "Part; section; department", radical: "阝 (City)", emoji: "🧩", words: ["部分", "部门", "全部", "内部"] },
+            "都": { pinyin: "dōu", english: "All; both; already; capital", radical: "阝 (City)", emoji: "♾️", words: ["都", "所有", "都在", "都会"] },
+            "需": { pinyin: "xū", english: "Need; require; necessary", radical: "雨 (Rain)", emoji: "📋", words: ["需要", "需求", "必要"] },
+            "领": { pinyin: "lǐng", english: "Lead; collar; domain; receive", radical: "页 (Page)", emoji: "🗺️", words: ["领域", "领导", "领先", "领取"] },
+            "高": { pinyin: "gāo", english: "High; tall; advanced", radical: "高 (Tall)", emoji: "⛰️", words: ["高大上", "高", "高级", "高度"] }
         };
 
         // Phrase / Word Dictionary
@@ -616,6 +726,14 @@
             document.getElementById('emojiDisplay').textContent = emoji;
             document.getElementById('emojiLabel').textContent = `Visual: ${targetHanzi}`;
 
+            // Show/hide "Words Containing This Character" section
+            const charWordsSection = document.getElementById('charWordsSection');
+            if (focusedChar) {
+                charWordsSection.classList.remove('hidden');
+            } else {
+                charWordsSection.classList.add('hidden');
+            }
+
             // Render Individual Character Breakdown Cards
             const charContainer = document.getElementById('charBreakdownContainer');
             charContainer.innerHTML = '';
@@ -650,6 +768,56 @@
 
                 charContainer.appendChild(card);
             });
+
+            // Render Words Containing This Character (for single character view)
+            const charWordsContainer = document.getElementById('charWordsContainer');
+            charWordsContainer.innerHTML = '';
+
+            if (focusedChar && displayEntry.words && displayEntry.words.length > 0) {
+                const title = document.createElement('div');
+                title.className = 'text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2';
+                title.innerHTML = `<i class="fa-solid fa-link"></i> Words containing "${focusedChar}"`;
+                charWordsContainer.appendChild(title);
+
+                displayEntry.words.forEach(word => {
+                    // Find full word info from dictionaryDB if available
+                    let wordInfo = null;
+                    if (dictionaryDB[word]) {
+                        wordInfo = dictionaryDB[word];
+                    } else {
+                        // Check compounds in dictionaryDB
+                        for (const entry of Object.values(dictionaryDB)) {
+                            if (entry.compounds) {
+                                const found = entry.compounds.find(c => c.word === word);
+                                if (found) {
+                                    wordInfo = found;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    const item = document.createElement('div');
+                    item.className = 'p-3 rounded-xl border transition cursor-pointer mb-2 bg-panelBg/80 border-slate-800 hover:border-slate-700 hover:bg-panelBg';
+                    
+                    const wordPinyin = wordInfo?.pinyin || '';
+                    const wordEnglish = wordInfo?.english || word;
+
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl font-bold text-white min-w-[70px]">${word}</span>
+                            <div class="flex-1 min-w-0">
+                                ${wordPinyin ? `<span class="text-sm text-purple-400 font-mono block">${wordPinyin}</span>` : ''}
+                                <span class="text-sm text-slate-300 truncate block">${wordEnglish}</span>
+                            </div>
+                        </div>
+                    `;
+                    item.addEventListener('click', () => updateDictionaryPanel(word, null));
+                    charWordsContainer.appendChild(item);
+                });
+            } else if (focusedChar) {
+                charWordsContainer.innerHTML = `<span class="text-xs text-slate-500 italic">No common words found for "${focusedChar}".</span>`;
+            }
 
             // Render Compound Words List
             const compoundsList = document.getElementById('compoundWordsList');
