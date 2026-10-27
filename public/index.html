@@ -184,9 +184,16 @@
                         <div class="p-2 border-b border-slate-800">
                             <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">第一部分：基础入门</span>
                         </div>
-                        <button data-tutorial="01-hello-cargo" class="tutorial-item w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-blue-600/20 transition flex items-center gap-2">
+                        <button data-tutorial="rust-course/01-hello-cargo" class="tutorial-item w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-blue-600/20 transition flex items-center gap-2">
                             <i class="fa-solid fa-play text-green-400 text-xs"></i>
                             <span class="truncate">01. 寻找牛刀，以便小试 — Hello World & Cargo</span>
+                        </button>
+                        <div class="p-2 border-b border-slate-800">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">算法科普 · 简单中文</span>
+                        </div>
+                        <button data-tutorial="algorithms/01-bubble-sort" class="tutorial-item w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-amber-600/20 transition flex items-center gap-2">
+                            <i class="fa-solid fa-play text-amber-400 text-xs"></i>
+                            <span class="truncate">01. 冒泡排序 — Bubble Sort</span>
                         </button>
                         <div class="p-2 border-t border-slate-800">
                             <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">更多章节即将添加...</span>
@@ -819,7 +826,20 @@
             "高": { pinyin: "gāo", english: "high; tall" },
             "高大上": { pinyin: "gāo dà shàng", english: "high-end; classy; premium" },
             "高度": { pinyin: "gāo dù", english: "height; altitude; highly" },
-            "高级": { pinyin: "gāo jí", english: "advanced; high-level; high-grade" }
+            "高级": { pinyin: "gāo jí", english: "advanced; high-level; high-grade" },
+            // Bubble sort / algorithm explainer vocabulary
+            "冒泡": { pinyin: "mào pào", english: "to bubble; bubbling" },
+            "冒泡排序": { pinyin: "mào pào pái xù", english: "bubble sort (simple sorting algorithm)" },
+            "气泡": { pinyin: "qì pào", english: "bubble; air bubble" },
+            "排序": { pinyin: "pái xù", english: "to sort; sorting; order" },
+            "比较": { pinyin: "bǐ jiào", english: "to compare; comparison; relatively" },
+            "交换": { pinyin: "jiāo huàn", english: "to exchange; to swap" },
+            "位置": { pinyin: "wèi zhì", english: "position; place; seat" },
+            "相邻": { pinyin: "xiāng lín", english: "adjacent; neighboring" },
+            "移动": { pinyin: "yí dòng", english: "to move; movement" },
+            "剩下": { pinyin: "shèng xià", english: "remaining; left over" },
+            "正确": { pinyin: "zhèng què", english: "correct; right; proper" },
+            "完成": { pinyin: "wán chéng", english: "to complete; to finish" }
         };
 
         // Phrase / Word Dictionary
@@ -1634,7 +1654,7 @@
             // Load Tutorial Content
             async function loadTutorial(tutorialId) {
                 try {
-                    const res = await fetch(`tutorials/rust-course/${tutorialId}.json`);
+                    const res = await fetch(`tutorials/${tutorialId}.json`);
                     if (!res.ok) throw new Error('Tutorial not found');
                     const data = await res.json();
                     appState.currentText = data.content;
