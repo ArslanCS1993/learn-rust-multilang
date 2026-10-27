@@ -1416,6 +1416,55 @@
                 </div>`;
             });
 
+            // Aggregate compounds from dictionaryDB for every selected character,
+            // so the "Common Compound Words & Usage" section is never hidden.
+            const seen = new Set();
+            const aggregateCompounds = [];
+            chars.forEach(c => {
+                const dbEntry = dictionaryDB[c];
+                if (dbEntry && dbEntry.compounds) {
+                    dbEntry.compounds.forEach(cp => {
+                        if (!seen.has(cp.word)) {
+                            seen.add(cp.word);
+                            aggregateCompounds.push(cp);
+                        }
+                    });
+                }
+            });
+
+            if (aggregateCompounds.length > 0) {
+                const cards = aggregateCompounds.map(cp => `
+                    <div class="p-4 rounded-xl border transition cursor-pointer mb-3 bg-panelBg/80 border-slate-800 hover:border-blue-500/50 hover:bg-blue-600/10 hover:shadow-lg hover:shadow-blue-500/10" onclick="updateDictionaryPanel('${cp.word}', null)">
+                        <div class="flex items-start gap-4">
+                            <span class="text-2xl font-bold text-white shrink-0">${cp.word}</span>
+                            <div class="flex-1 min-w-0">
+                                <span class="text-lg text-purple-400 font-mono block mb-1">${cp.pinyin}</span>
+                                <span class="text-base text-slate-300 leading-relaxed">${cp.english}</span>
+                            </div>
+                        </div>
+                    </div>`).join('');
+
+                html += `
+                <div class="bg-cardBg rounded-2xl p-4 border border-slate-700/50 shadow-xl">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-diagram-project text-blue-400"></i> Common Compound Words & Usage</span>
+                        <span class="text-[10px] text-slate-500 font-normal">From all selected characters</span>
+                    </h4>
+                    ${cards}
+                </div>`;
+            }
+
+            // Passage context stays available in multi-select mode too
+            html += `
+                <div class="bg-cardBg rounded-2xl p-4 border border-slate-700/50 shadow-xl">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-quote-left text-purple-400"></i> Passage Context
+                    </h4>
+                    <p class="text-xs text-slate-300 italic leading-relaxed bg-panelBg/60 p-3 rounded-xl border border-slate-800/80">
+                        Selected: "${text}" — click any character card above to inspect it individually.
+                    </p>
+                </div>`;
+
             section.innerHTML = html;
             document.getElementById('dictionaryDisplay').scrollTop = 0;
         }
