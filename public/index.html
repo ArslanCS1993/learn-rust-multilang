@@ -1584,6 +1584,109 @@
                     document.body.style.userSelect = '';
                 }
             });
+
+            // === VERIFICATION SYSTEM ===
+            function verifyElements() {
+                const criticalElements = [
+                    // Toolbar buttons
+                    'togglePinyinBtn', 'editContentBtn', 'ttsButton', 'speakFullBtn',
+                    'audioToggleBtn', 'emojiAnimToggleBtn', 'tutorialToggleBtn',
+                    // Editor modal
+                    'editorModal', 'closeEditorBtn', 'loadTextBtn', 'resetDefaultBtn', 'customTextInput',
+                    // Search
+                    'dictionarySearch',
+                    // Right panel display elements
+                    'targetHanzi', 'targetPinyin', 'targetPos', 'targetEnglish', 'targetEmoji',
+                    'charBreakdownContainer', 'charWordsSection', 'charWordsContainer',
+                    'compoundWordsList', 'contextSentence',
+                    // Reading pane
+                    'readingContainer',
+                    // Tutorial dropdown
+                    'tutorialDropdown', 'tutorialBtnText',
+                    // Panels & splitter
+                    'leftPanel', 'rightPanel', 'splitter',
+                    // Multi-select
+                    'multiSelectSection', 'singleEntryCard',
+                ];
+
+                const criticalFunctions = [
+                    'renderReadingContent', 'updateDictionaryPanel', 'speakChinese',
+                    'toggleAudio', 'toggleEmojiAnim', 'loadTutorial', 'renderMultiSelection',
+                    'navigateLeft', 'navigateRight', 'focusCharAtIndex',
+                ];
+
+                let allOk = true;
+                
+                // Check elements
+                for (const id of criticalElements) {
+                    const el = document.getElementById(id);
+                    if (!el) {
+                        console.error(`❌ MISSING ELEMENT: #${id}`);
+                        allOk = false;
+                    } else {
+                        console.log(`✅ Element found: #${id}`);
+                    }
+                }
+
+                // Check functions
+                for (const fn of criticalFunctions) {
+                    if (typeof window[fn] !== 'function' && typeof eval(fn) !== 'function') {
+                        // Functions are in local scope, check differently
+                        try {
+                            eval(fn);
+                            console.log(`✅ Function available: ${fn}`);
+                        } catch (e) {
+                            console.error(`❌ MISSING FUNCTION: ${fn}`);
+                            allOk = false;
+                        }
+                    } else {
+                        console.log(`✅ Function available: ${fn}`);
+                    }
+                }
+
+                // Check tutorial items
+                const tutorialItems = document.querySelectorAll('.tutorial-item');
+                console.log(`✅ Tutorial items found: ${tutorialItems.length}`);
+                tutorialItems.forEach((item, i) => {
+                    const tutId = item.dataset.tutorial;
+                    if (!tutId) console.error(`❌ Tutorial item ${i} missing data-tutorial`);
+                    else console.log(`✅ Tutorial item ${i}: ${tutId}`);
+                });
+
+                // Check data structures
+                if (typeof singleCharDB === 'object' && Object.keys(singleCharDB).length > 0) {
+                    console.log(`✅ singleCharDB loaded: ${Object.keys(singleCharDB).length} characters`);
+                } else {
+                    console.error('❌ singleCharDB missing or empty');
+                    allOk = false;
+                }
+                if (typeof dictionaryDB === 'object' && Object.keys(dictionaryDB).length > 0) {
+                    console.log(`✅ dictionaryDB loaded: ${Object.keys(dictionaryDB).length} entries`);
+                } else {
+                    console.error('❌ dictionaryDB missing or empty');
+                    allOk = false;
+                }
+                if (typeof wordDefinitions === 'object' && Object.keys(wordDefinitions).length > 0) {
+                    console.log(`✅ wordDefinitions loaded: ${Object.keys(wordDefinitions).length} words`);
+                } else {
+                    console.error('❌ wordDefinitions missing or empty');
+                    allOk = false;
+                }
+
+                if (allOk) {
+                    console.log('%c✅ ALL VERIFICATION CHECKS PASSED', 'color: #22c55e; font-weight: bold; font-size: 14px;');
+                } else {
+                    console.error('%c❌ SOME VERIFICATION CHECKS FAILED', 'color: #ef4444; font-weight: bold; font-size: 14px;');
+                }
+
+                return allOk;
+            }
+
+            // Run verification after a short delay to ensure all async ops complete
+            setTimeout(verifyElements, 100);
+
+            // Expose verification for manual testing
+            window.verifyApp = verifyElements;
         });
     </script>
 </body>
