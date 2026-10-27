@@ -168,10 +168,30 @@
         
         <!-- Left Reading Section -->
         <section id="leftPanel" class="resizable-panel flex flex-col border-r border-slate-800/80 bg-darkBg relative" style="width: 50%; min-width: 300px; max-width: 80%;">
-            <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400">
+            <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400 flex-wrap gap-2">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-book-open text-blue-400"></i>
                     <span>Source Text (←/→ arrows to navigate, click for word, click again for character)</span>
+                </div>
+                <!-- Tutorial Selector -->
+                <div class="relative">
+                    <button id="tutorialToggleBtn" class="px-3 py-1.5 rounded-xl bg-green-600/20 hover:bg-green-600/30 text-green-300 font-medium border border-green-500/30 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-graduation-cap text-green-400"></i>
+                        <span id="tutorialBtnText">Tutorial: Rust 语言圣经</span>
+                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+                    <div id="tutorialDropdown" class="hidden absolute bottom-full left-0 mb-2 w-64 bg-panelBg border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden z-20">
+                        <div class="p-2 border-b border-slate-800">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">第一部分：基础入门</span>
+                        </div>
+                        <button data-tutorial="01-hello-cargo" class="tutorial-item w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-blue-600/20 transition flex items-center gap-2">
+                            <i class="fa-solid fa-play text-green-400 text-xs"></i>
+                            <span class="truncate">01. 寻找牛刀，以便小试 — Hello World & Cargo</span>
+                        </button>
+                        <div class="p-2 border-t border-slate-800">
+                            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">更多章节即将添加...</span>
+                        </div>
+                    </div>
                 </div>
                 <button id="speakFullBtn" class="hover:text-blue-400 transition flex items-center gap-1" title="Read aloud">
                     <i class="fa-solid fa-volume-high text-xs"></i> Speak Passage
@@ -1386,6 +1406,38 @@
                     const query = searchInput.value.trim();
                     if (query) updateDictionaryPanel(query, null);
                 }
+            });
+
+            // Tutorial Dropdown Toggle
+            const tutorialToggle = document.getElementById('tutorialToggleBtn');
+            const tutorialDropdown = document.getElementById('tutorialDropdown');
+            tutorialToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                tutorialDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => tutorialDropdown.classList.add('hidden'));
+
+            // Load Tutorial Content
+            async function loadTutorial(tutorialId) {
+                try {
+                    const res = await fetch(`tutorials/rust-course/${tutorialId}.json`);
+                    if (!res.ok) throw new Error('Tutorial not found');
+                    const data = await res.json();
+                    renderReadingContent(data.content);
+                    document.getElementById('tutorialBtnText').textContent = `Tutorial: ${data.title}`;
+                    tutorialDropdown.classList.add('hidden');
+                    // Scroll to top of reading pane
+                    document.getElementById('readingContainer').scrollTop = 0;
+                } catch (err) {
+                    console.error('Failed to load tutorial:', err);
+                }
+            }
+
+            document.querySelectorAll('.tutorial-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    loadTutorial(item.dataset.tutorial);
+                });
             });
 
             // TTS Speech Buttons
