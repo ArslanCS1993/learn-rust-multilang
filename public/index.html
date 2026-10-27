@@ -237,6 +237,14 @@
                     <i class="fa-solid fa-volume-high text-sm"></i>
                     <span>Audio</span>
                 </button>
+                <button id="audioToggleBtn" class="px-3 py-2 rounded-xl bg-cardBg border border-slate-700/80 hover:border-green-500 text-green-400 text-xs font-medium transition flex items-center gap-1.5 shrink-0" title="Toggle audio on/off">
+                    <i class="fa-solid fa-volume-high text-sm" id="audioToggleIcon"></i>
+                    <span id="audioToggleText">Audio: On</span>
+                </button>
+                <button id="emojiAnimToggleBtn" class="px-3 py-2 rounded-xl bg-cardBg border border-slate-700/80 hover:border-amber-500 text-amber-400 text-xs font-medium transition flex items-center gap-1.5 shrink-0" title="Toggle emoji animation">
+                    <i class="fa-solid fa-circle-notch text-sm" id="emojiAnimToggleIcon"></i>
+                    <span id="emojiAnimToggleText">Anim: On</span>
+                </button>
             </div>
 
             <!-- Scrollable Analysis Area -->
@@ -258,17 +266,9 @@
                             </div>
                             <p id="targetEnglish" class="text-slate-300 mt-2 text-sm md:text-base font-medium">Algorithm; step-by-step procedure for calculation.</p>
                         </div>
-                        <div id="targetEmoji" class="text-4xl bg-panelBg/80 border border-slate-700/60 p-3 rounded-2xl shadow-inner flex items-center justify-center shrink-0">
+                        <div id="targetEmoji" class="text-4xl bg-panelBg/80 border border-slate-700/60 p-3 rounded-2xl shadow-inner flex items-center justify-center shrink-0 animate-bounce" style="animation-duration: 2s;">
                             🧮
                         </div>
-                    </div>
-
-                    <!-- Emoji Visual Display -->
-                    <div class="mt-4 border border-slate-700/40 rounded-xl bg-darkBg/60 p-3 flex flex-col items-center justify-center relative min-h-[50px]">
-                        <div id="emojiDisplay" class="text-4xl md:text-5xl lg:text-6xl flex justify-center items-center animate-bounce" style="line-height: 1;">
-                            🧮
-                        </div>
-                        <span id="emojiLabel" class="text-[10px] text-slate-500 mt-0.5 font-mono tracking-wide">Visual</span>
                     </div>
 
                     <!-- Nested Character Breakdown Section (Addresses Feedback) -->
@@ -1282,13 +1282,62 @@
         }
 
         // Native Web Speech API Audio
+        let audioEnabled = true;
+        let emojiAnimEnabled = true;
+
         function speakChinese(text) {
+            if (!audioEnabled) return;
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'zh-CN';
                 utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const btn = document.getElementById('audioToggleBtn');
+            const icon = document.getElementById('audioToggleIcon');
+            const text = document.getElementById('audioToggleText');
+            if (audioEnabled) {
+                btn.classList.remove('text-red-400', 'border-red-500');
+                btn.classList.add('text-green-400', 'border-green-500');
+                icon.classList.remove('fa-volume-xmark');
+                icon.classList.add('fa-volume-high');
+                text.textContent = 'Audio: On';
+            } else {
+                btn.classList.remove('text-green-400', 'border-green-500');
+                btn.classList.add('text-red-400', 'border-red-500');
+                icon.classList.remove('fa-volume-high');
+                icon.classList.add('fa-volume-xmark');
+                text.textContent = 'Audio: Off';
+                // Stop any currently playing audio
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        }
+
+        function toggleEmojiAnim() {
+            emojiAnimEnabled = !emojiAnimEnabled;
+            const btn = document.getElementById('emojiAnimToggleBtn');
+            const icon = document.getElementById('emojiAnimToggleIcon');
+            const text = document.getElementById('emojiAnimToggleText');
+            const targetEmoji = document.getElementById('targetEmoji');
+            if (emojiAnimEnabled) {
+                btn.classList.remove('text-slate-400', 'border-slate-500');
+                btn.classList.add('text-amber-400', 'border-amber-500');
+                icon.classList.remove('fa-circle-stop');
+                icon.classList.add('fa-circle-notch');
+                text.textContent = 'Anim: On';
+                targetEmoji.classList.add('animate-bounce');
+            } else {
+                btn.classList.remove('text-amber-400', 'border-amber-500');
+                btn.classList.add('text-slate-400', 'border-slate-500');
+                icon.classList.remove('fa-circle-notch');
+                icon.classList.add('fa-circle-stop');
+                text.textContent = 'Anim: Off';
+                targetEmoji.classList.remove('animate-bounce');
             }
         }
 
@@ -1450,6 +1499,12 @@
                 const text = window.getSelection().toString() || defaultSampleText;
                 speakChinese(text);
             });
+
+            // Audio Toggle
+            document.getElementById('audioToggleBtn').addEventListener('click', toggleAudio);
+
+            // Emoji Animation Toggle
+            document.getElementById('emojiAnimToggleBtn').addEventListener('click', toggleEmojiAnim);
 
             // Resizable Splitter
             const splitter = document.getElementById('splitter');
