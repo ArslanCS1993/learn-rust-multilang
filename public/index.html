@@ -171,7 +171,7 @@
             <div class="px-6 py-2.5 border-b border-slate-800/60 bg-panelBg/40 flex justify-between items-center text-xs text-slate-400 flex-wrap gap-2 overflow-visible">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-book-open text-blue-400"></i>
-                    <span>Source Text (←/→ arrows to navigate, click for word, click again for character)</span>
+                    <span>Source Text (←/→ navigate • click a word to inspect • drag across characters to multi-select)</span>
                 </div>
                 <!-- Tutorial Selector -->
                 <div class="relative" style="z-index: 50;">
@@ -228,7 +228,7 @@
         <section id="rightPanel" class="resizable-panel flex flex-col bg-panelBg overflow-hidden" style="width: 50%; min-width: 300px; max-width: 80%;">
             
             <!-- Quick Dictionary Search & Audio Bar -->
-            <div class="p-4 border-b border-slate-800/80 bg-panelBg/80 flex gap-3 items-center">
+            <div class="p-4 border-b border-slate-800/80 bg-panelBg/80 flex gap-3 items-center shrink-0">
                 <div class="relative flex-1">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                     <input type="text" id="dictionarySearch" placeholder="Search Hanzi, Pinyin or English..." class="w-full bg-cardBg border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
@@ -937,16 +937,78 @@
             }
         };
 
-        // App States
-        let showPinyin = false;
-        let activeWordSpan = null;
-        let activeCharSpan = null;
-        let lastClickedChar = null; // Track last clicked char for drill-down
-        let lastParentWord = null;  // Track parent word for drill-down
+        // ============================================================
+        // APP STATE — single source of truth.
+        // Architecture ported from the working reference reader:
+        // state-driven, idempotent rendering (same state -> same panel,
+        // so nothing can flash or get out of sync).
+        // ============================================================
+        const appState = {
+            showPinyin: false,
+            audioEnabled: true,
+            emojiAnimEnabled: true,
+            currentText: defaultSampleText,
+            activeTarget: '算法',   // word or single character shown in the main card
+            multiSelection: null,   // { text, start, end } or null
+        };
         let navigableChars = [];    // All character spans in reading order
         let currentNavIndex = -1;   // Current keyboard navigation index
 
-        // Render Passage Content with Nested Character Containers
+        // ------------------------------------------------------------
+        // REVERSE COMPOUND INDEX: character -> every known word containing it.
+        // Built from ALL words we know (wordDefinitions + dictionaryDB +
+        // dictionaryDB compounds), so the "Common Compound Words & Usage"
+        // section is ALWAYS populated for any character that appears in
+        // any known word. This is the core fix ported from the reference.
+        // ------------------------------------------------------------
+        const charToCompoundsMap = {};
+        (function buildCompoundMap() {
+            const addWord = (word, pinyin, english) => {
+                if (!word) return;
+                for (const c of word) {
+                    if (!/[\u4e00-\u9fa5]/.test(c)) continue;
+                    if (!charToCompoundsMap[c]) charToCompoundsMap[c] = [];
+                    if (!charToCompoundsMap[c].some(e => e.word === word)) {
+                        charToCompoundsMap[c].push({ word: word, pinyin: pinyin || '', english: english || '' });
+                    }
+                }
+            };
+            Object.entries(wordDefinitions).forEach(([w, m]) => addWord(w, m.pinyin, m.english));
+            Object.entries(dictionaryDB).forEach(([w, m]) => {
+                if (w.length > 1) addWord(w, m.pinyin, m.english);
+                (m.compounds || []).forEach(cp => addWord(cp.word, cp.pinyin, cp.english));
+            });
+        })();
+
+        // Unified lookup: wordDefinitions -> dictionaryDB -> singleCharDB -> fallback
+        function lookupEntry(term) {
+            if (wordDefinitions[term]) {
+                const w = wordDefinitions[term];
+                return { pinyin: w.pinyin || '', english: w.english || '', emoji: '📖', pos: term.length > 1 ? 'Word' : 'Hanzi Character' };
+            }
+            if (dictionaryDB[term]) {
+                const d = dictionaryDB[term];
+                return { pinyin: d.pinyin || '', english: d.english || '', emoji: d.emoji || '📖', pos: d.pos || (term.length > 1 ? 'Compound Phrase' : 'Hanzi Character'), context: d.context };
+            }
+            if (singleCharDB[term]) {
+                const c = singleCharDB[term];
+                return { pinyin: c.pinyin || '', english: c.english || '', emoji: c.emoji || '🔤', pos: 'Single Character', radical: c.radical };
+            }
+            const py = [...term].map(c => (singleCharDB[c] || {}).pinyin || '').filter(Boolean).join(' ');
+            return { pinyin: py || 'pīn yīn', english: `Chinese term: "${term}"`, emoji: '🔍', pos: term.length > 1 ? 'Phrase' : 'Hanzi Character' };
+        }
+
+        // Find the sentence in the current passage containing the target
+        function findContextSentence(term) {
+            if (dictionaryDB[term] && dictionaryDB[term].context) return dictionaryDB[term].context;
+            const sentences = appState.currentText.split(/[。！？；\n]/).map(s => s.trim()).filter(Boolean);
+            const hit = sentences.find(s => s.includes(term));
+            return hit ? `${hit}。` : null;
+        }
+
+        // ============================================================
+        // TEXT RENDERING
+        // ============================================================
         function renderReadingContent(rawText) {
             const container = document.getElementById('readingContainer');
             container.innerHTML = '';
@@ -954,6 +1016,7 @@
 
             const paragraphs = rawText.split('\n');
 
+            let globalIdx = 0;
             paragraphs.forEach(pText => {
                 if (!pText.trim()) return;
 
@@ -964,7 +1027,7 @@
                 while (idx < pText.length) {
                     let matchedPhrase = null;
 
-                    // Match multi-character words from dictionary
+                    // Match multi-character words from dictionary (longest first)
                     for (let len = 4; len >= 2; len--) {
                         const sub = pText.substr(idx, len);
                         if (dictionaryDB[sub]) {
@@ -974,31 +1037,22 @@
                     }
 
                     if (matchedPhrase) {
-                        // Create Word Group Container
+                        // Word Group Container — one click inspects the whole word
                         const wordSpan = document.createElement('span');
                         wordSpan.className = 'hz-word-group';
                         wordSpan.dataset.word = matchedPhrase;
 
-                        // Fill with individual characters
                         for (let cIdx = 0; cIdx < matchedPhrase.length; cIdx++) {
                             const char = matchedPhrase[cIdx];
                             const charSpan = createCharSpan(char, matchedPhrase);
+                            charSpan.dataset.idx = globalIdx++;
                             wordSpan.appendChild(charSpan);
                             navigableChars.push({ span: charSpan, char, parentWord: matchedPhrase, isInWord: true });
                         }
 
-                        // Word-level click listener - clicking the word group shows the compound word
                         wordSpan.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            clearActiveHighlights();
-                            clearNavFocus();
-                            wordSpan.classList.add('word-active');
-                            activeWordSpan = wordSpan;
-                            updateDictionaryPanel(matchedPhrase, null);
-                            
-                            // Sync navigation to first character of this word
-                            const firstCharIdx = navigableChars.findIndex(item => item.parentWord === matchedPhrase);
-                            if (firstCharIdx !== -1) currentNavIndex = firstCharIdx;
+                            selectWord(matchedPhrase);
                         });
 
                         pElem.appendChild(wordSpan);
@@ -1006,13 +1060,14 @@
                     } else {
                         const char = pText[idx];
                         if (/[\s，。、（）！：；“”‘’]/.test(char)) {
+                            // Punctuation is NOT clickable — plain, inert text
                             const span = document.createElement('span');
                             span.textContent = char;
                             span.className = 'text-slate-500 select-none mx-0.5';
                             pElem.appendChild(span);
                         } else {
-                            // Standalone Character Span
                             const charSpan = createCharSpan(char, null);
+                            charSpan.dataset.idx = globalIdx++;
                             pElem.appendChild(charSpan);
                             navigableChars.push({ span: charSpan, char, parentWord: null, isInWord: false });
                         }
@@ -1022,97 +1077,118 @@
 
                 container.appendChild(pElem);
             });
-            
-            // Reset navigation index
+
             currentNavIndex = -1;
+            refreshHighlights();
         }
 
-        // Helper to Create Individual Character Element
+        // Helper to Create Individual Character Element.
+        // Chars inside words have NO own click handler — the click bubbles to
+        // the word group (predictable one-click word inspection, no drill-down
+        // state machine). Character detail stays one click away via the
+        // breakdown tiles in the right panel.
         function createCharSpan(char, parentWord) {
             const span = document.createElement('span');
             span.className = 'hz-char';
             span.dataset.char = char;
 
-            const charInfo = singleCharDB[char] || { pinyin: "pīn" };
+            const charInfo = singleCharDB[char] || { pinyin: 'pīn' };
 
-            if (showPinyin && charInfo.pinyin) {
+            if (appState.showPinyin && charInfo.pinyin) {
                 span.innerHTML = `<ruby class="pinyin-ruby">${char}<rt>${charInfo.pinyin}</rt></ruby>`;
             } else {
                 span.textContent = char;
             }
 
-            // Click Handler for Character
-            span.addEventListener('click', (e) => {
-                e.stopPropagation();
-                clearActiveHighlights();
-                clearNavFocus();
-                span.classList.add('char-active');
-                activeCharSpan = span;
-
-                // Sync navigation index
-                const navIdx = navigableChars.findIndex(item => item.span === span);
-                if (navIdx !== -1) currentNavIndex = navIdx;
-
-                if (parentWord) {
-                    // Character is part of a compound word
-                    // First click on this character: show parent word
-                    // Second click on same character: show individual character breakdown
-                    if (lastClickedChar === char && lastParentWord === parentWord) {
-                        // Second click - drill down to individual character
-                        updateDictionaryPanel(parentWord, char);
-                        lastClickedChar = null;
-                        lastParentWord = null;
-                    } else {
-                        // First click - show parent word
-                        updateDictionaryPanel(parentWord, null);
-                        lastClickedChar = char;
-                        lastParentWord = parentWord;
-                    }
-                } else {
-                    // Standalone character
-                    updateDictionaryPanel(char, char);
-                    lastClickedChar = null;
-                    lastParentWord = null;
-                }
-            });
+            if (!parentWord) {
+                span.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectChar(char);
+                });
+            }
 
             return span;
         }
 
-        function clearActiveHighlights() {
-            document.querySelectorAll('.hz-word-group.word-active').forEach(el => el.classList.remove('word-active'));
-            document.querySelectorAll('.hz-char.char-active').forEach(el => el.classList.remove('char-active'));
+        // ============================================================
+        // SELECTION — all highlighting is re-derived from state on every
+        // change (idempotent), so re-renders can never flash.
+        // ============================================================
+        function refreshHighlights() {
+            const sel = appState.multiSelection;
+            document.querySelectorAll('.hz-word-group').forEach(el => {
+                el.classList.toggle('word-active', !sel && el.dataset.word === appState.activeTarget);
+            });
+            document.querySelectorAll('.hz-char').forEach(el => {
+                let active = false;
+                if (sel) {
+                    const i = parseInt(el.dataset.idx);
+                    active = i >= sel.start && i <= sel.end;
+                } else {
+                    active = appState.activeTarget.length === 1 && el.dataset.char === appState.activeTarget;
+                }
+                el.classList.toggle('char-active', active);
+            });
         }
 
         function clearNavFocus() {
             document.querySelectorAll('.hz-char.nav-focused').forEach(el => el.classList.remove('nav-focused'));
         }
 
+        function syncNavIndex(predicate) {
+            const idx = navigableChars.findIndex(predicate);
+            if (idx !== -1) currentNavIndex = idx;
+        }
+
+        function applySelection() {
+            refreshHighlights();
+            updateDictionaryPanel();
+        }
+
+        // One click = one deterministic outcome. No drill-down flags.
+        function selectWord(word) {
+            appState.multiSelection = null;
+            appState.activeTarget = word;
+            syncNavIndex(n => n.parentWord === word);
+            applySelection();
+        }
+
+        function selectChar(char) {
+            appState.multiSelection = null;
+            appState.activeTarget = char;
+            syncNavIndex(n => !n.parentWord && n.char === char);
+            applySelection();
+        }
+
+        function selectMulti(clean, start, end) {
+            appState.multiSelection = { text: clean, start, end };
+            appState.activeTarget = clean;
+            clearNavFocus();
+            currentNavIndex = -1;
+            applySelection();
+        }
+
+        function exitMultiSelect() {
+            appState.multiSelection = null;
+            applySelection();
+        }
+
+        // ============================================================
+        // KEYBOARD NAVIGATION (←/→ with wrap, Enter/Space = click)
+        // ============================================================
         function focusCharAtIndex(index) {
             if (index < 0 || index >= navigableChars.length) return;
-            
+
             clearNavFocus();
             currentNavIndex = index;
-            
+
             const navItem = navigableChars[index];
             navItem.span.classList.add('nav-focused');
             navItem.span.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            
-            // Update the right panel based on drill-down state
-            if (navItem.parentWord) {
-                // Character is part of a compound word
-                // Check if we're in drill-down mode for this char/word combo
-                if (lastClickedChar === navItem.char && lastParentWord === navItem.parentWord) {
-                    // Show individual character breakdown
-                    updateDictionaryPanel(navItem.parentWord, navItem.char);
-                } else {
-                    // Show parent word
-                    updateDictionaryPanel(navItem.parentWord, null);
-                }
-            } else {
-                // Standalone character
-                updateDictionaryPanel(navItem.char, navItem.char);
-            }
+
+            appState.multiSelection = null;
+            appState.activeTarget = navItem.parentWord || navItem.char;
+            applySelection();
         }
 
         function navigateLeft() {
@@ -1129,11 +1205,9 @@
             focusCharAtIndex(newIndex);
         }
 
-        // Handle keyboard navigation
         document.addEventListener('keydown', (e) => {
-            // Only navigate if not typing in an input
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            
+
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 navigateLeft();
@@ -1141,159 +1215,132 @@
                 e.preventDefault();
                 navigateRight();
             } else if (e.key === 'Enter' || e.key === ' ') {
-                // Enter/Space acts like a click on the focused character
                 e.preventDefault();
                 if (currentNavIndex >= 0 && currentNavIndex < navigableChars.length) {
-                    const navItem = navigableChars[currentNavIndex];
-                    navItem.span.click();
+                    navigableChars[currentNavIndex].span.click();
                 }
             }
         });
 
-        // Update Dictionary & Breakdown Display
-        function updateDictionaryPanel(phraseOrChar, focusedChar) {
-            // Restore single-entry view (exits multi-selection view)
+        // ============================================================
+        // UNIVERSAL DICTIONARY PANEL RENDER — argument-free, state-driven.
+        // "Individual Character Breakdown" and "Common Compound Words &
+        // Usage" are ALWAYS populated (never conditionally hidden).
+        // ============================================================
+        function updateDictionaryPanel() {
+            if (appState.multiSelection) {
+                renderMultiSelection();
+                return;
+            }
+
+            const target = appState.activeTarget || '算法';
+            const entry = lookupEntry(target);
+
             document.getElementById('singleEntryCard').classList.remove('hidden');
             document.getElementById('multiSelectSection').classList.add('hidden');
 
-            // Remember for exitMultiSelect()
-            lastEntry = { phrase: phraseOrChar, focused: focusedChar };
+            document.getElementById('targetHanzi').textContent = target;
+            document.getElementById('targetPinyin').textContent = entry.pinyin;
+            document.getElementById('targetPos').textContent = entry.pos;
+            document.getElementById('targetEnglish').textContent = entry.english;
+            const emojiEl = document.getElementById('targetEmoji');
+            emojiEl.textContent = entry.emoji || '🔤';
+            emojiEl.classList.toggle('animate-bounce', appState.emojiAnimEnabled);
 
-            const entry = dictionaryDB[phraseOrChar] || {
-                pinyin: (singleCharDB[phraseOrChar] || {}).pinyin || (wordDefinitions[phraseOrChar] || {}).pinyin || "pīn yīn",
-                pos: phraseOrChar.length > 1 ? "Compound Phrase" : "Hanzi Character",
-                english: (singleCharDB[phraseOrChar] || {}).english || (wordDefinitions[phraseOrChar] || {}).english || `Chinese term: "${phraseOrChar}"`,
-                emoji: (singleCharDB[phraseOrChar] || {}).emoji || "🔤",
-                compounds: [],
-                context: `Selected item "${phraseOrChar}" from reading text.`
-            };
+            const ctx = findContextSentence(target);
+            document.getElementById('contextSentence').textContent = ctx ? `"${ctx}"` : 'No matching sentence found in the current passage.';
 
-            const targetHanzi = focusedChar || phraseOrChar;
-            const displayEntry = focusedChar ? (singleCharDB[focusedChar] || {}) : entry;
-
-            document.getElementById('targetHanzi').textContent = targetHanzi;
-            document.getElementById('targetPinyin').textContent = focusedChar ? (displayEntry.pinyin || '') : entry.pinyin;
-            document.getElementById('targetPos').textContent = focusedChar ? "Single Character" : entry.pos;
-            document.getElementById('targetEnglish').textContent = focusedChar ? (displayEntry.english || 'Character breakdown') : entry.english;
-            document.getElementById('targetEmoji').textContent = focusedChar ? (displayEntry.emoji || '🔤') : entry.emoji;
-            document.getElementById('contextSentence').textContent = entry.context || `Usage in context.`;
-
-            // Render Emoji Display - use character's emoji for individual characters, word's emoji for compounds
-            const emoji = focusedChar ? (displayEntry.emoji || '🔤') : (entry.emoji || '🔤');
-            document.getElementById('emojiDisplay').textContent = emoji;
-            document.getElementById('emojiLabel').textContent = `Visual: ${targetHanzi}`;
-
-            // Show/hide "Words Containing This Character" section
-            const charWordsSection = document.getElementById('charWordsSection');
-            if (focusedChar) {
-                charWordsSection.classList.remove('hidden');
-            } else {
-                charWordsSection.classList.add('hidden');
-            }
-
-            // Render Individual Character Breakdown Cards
+            // --- A. INDIVIDUAL CHARACTER BREAKDOWN — ALWAYS RENDERED ---
             const charContainer = document.getElementById('charBreakdownContainer');
             charContainer.innerHTML = '';
-
-            const charactersToBreak = phraseOrChar.split('');
-            charactersToBreak.forEach(c => {
+            const seenChars = new Set();
+            for (const c of target) {
+                if (!/[\u4e00-\u9fa5]/.test(c) || seenChars.has(c)) continue;
+                seenChars.add(c);
                 const info = singleCharDB[c] || { pinyin: 'pīn', english: 'Character unit', radical: 'Standard' };
-                const isSelected = (focusedChar === c);
-
                 const card = document.createElement('div');
-                card.className = `p-3 rounded-xl border transition cursor-pointer flex items-center justify-between hover:shadow-lg hover:shadow-blue-500/10 ${
-                    isSelected 
-                    ? 'bg-blue-600/20 border-blue-500 shadow-md ring-1 ring-blue-500/30' 
-                    : 'bg-panelBg/80 border-slate-800 hover:border-blue-500/50 hover:bg-panelBg'
-                }`;
-
+                card.className = 'p-3 rounded-xl border transition cursor-pointer flex items-center justify-between hover:shadow-lg hover:shadow-blue-500/10 bg-panelBg/80 border-slate-800 hover:border-blue-500/50 hover:bg-panelBg';
                 card.innerHTML = `
                     <div class="flex items-center gap-3">
                         <span class="text-2xl font-bold text-white">${c}</span>
                         <div>
-                            <span class="text-xs text-purple-400 font-mono block">${info.pinyin}</span>
-                            <span class="text-[11px] text-slate-400 line-clamp-1">${info.english}</span>
+                            <span class="text-xs text-purple-400 font-mono block">${info.pinyin || ''}</span>
+                            <span class="text-[11px] text-slate-400 line-clamp-1">${info.english || ''}</span>
                         </div>
                     </div>
                     <span class="text-xs text-slate-500 font-mono">${info.radical || ''}</span>
                 `;
-
-                card.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    updateDictionaryPanel(phraseOrChar, c);
-                });
-
+                card.addEventListener('click', () => selectChar(c));
                 charContainer.appendChild(card);
-            });
-
-            // Render Words Containing This Character (for single character view)
-            const charWordsContainer = document.getElementById('charWordsContainer');
-            charWordsContainer.innerHTML = '';
-
-            if (focusedChar && displayEntry.words && displayEntry.words.length > 0) {
-                const title = document.createElement('div');
-                title.className = 'text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2';
-                title.innerHTML = `<i class="fa-solid fa-link"></i> Words containing "${focusedChar}"`;
-                charWordsContainer.appendChild(title);
-
-                displayEntry.words.forEach(word => {
-                    // Look up word definition: dedicated word map first, then dictionaryDB
-                    let wordInfo = wordDefinitions[word] || null;
-                    if (!wordInfo && dictionaryDB[word]) {
-                        wordInfo = dictionaryDB[word];
-                    } else if (!wordInfo) {
-                        // Check compounds in dictionaryDB
-                        for (const entry of Object.values(dictionaryDB)) {
-                            if (entry.compounds) {
-                                const found = entry.compounds.find(c => c.word === word);
-                                if (found) {
-                                    wordInfo = found;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    const item = document.createElement('div');
-                    item.className = 'p-3 rounded-xl border transition cursor-pointer mb-2 bg-panelBg/80 border-slate-800 hover:border-green-500/50 hover:bg-green-600/10 hover:shadow-lg hover:shadow-green-500/10';
-                    
-                    const wordPinyin = wordInfo?.pinyin || '';
-                    const wordEnglish = wordInfo?.english || word;
-
-                    item.innerHTML = `
-                        <div class="flex items-start gap-3">
-                            <span class="text-xl font-bold text-white shrink-0">${word}</span>
-                            <div class="flex-1 min-w-0">
-                                ${wordPinyin ? `<span class="text-sm text-purple-400 font-mono block mb-1">${wordPinyin}</span>` : ''}
-                                <span class="text-sm text-slate-300 leading-relaxed">${wordEnglish}</span>
-                            </div>
-                        </div>
-                    `;
-                    item.addEventListener('click', () => updateDictionaryPanel(word, null));
-                    charWordsContainer.appendChild(item);
-                });
-            } else if (focusedChar) {
-                charWordsContainer.innerHTML = `<span class="text-xs text-slate-500 italic">No common words found for "${focusedChar}".</span>`;
             }
 
-            // Render Compound Words List
+            // --- B. WORDS CONTAINING THIS CHARACTER (single char view only) ---
+            const charWordsSection = document.getElementById('charWordsSection');
+            const charWordsContainer = document.getElementById('charWordsContainer');
+            charWordsContainer.innerHTML = '';
+            if (target.length === 1) {
+                charWordsSection.classList.remove('hidden');
+                // Merge the char DB words with EVERY known word containing this char
+                const wordSet = new Map();
+                ((singleCharDB[target] || {}).words || []).forEach(w => wordSet.set(w, null));
+                (charToCompoundsMap[target] || []).forEach(e => { if (!wordSet.has(e.word)) wordSet.set(e.word, e); });
+
+                if (wordSet.size > 0) {
+                    const title = document.createElement('div');
+                    title.className = 'text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2';
+                    title.innerHTML = `<i class="fa-solid fa-link"></i> Words containing "${target}"`;
+                    charWordsContainer.appendChild(title);
+
+                    wordSet.forEach((mapEntry, w) => {
+                        const wi = wordDefinitions[w] || (dictionaryDB[w] || null);
+                        const pinyin = (wi && wi.pinyin) || (mapEntry && mapEntry.pinyin) || '';
+                        const english = (wi && wi.english) || (mapEntry && mapEntry.english) || w;
+                        const item = document.createElement('div');
+                        item.className = 'p-3 rounded-xl border transition cursor-pointer mb-2 bg-panelBg/80 border-slate-800 hover:border-green-500/50 hover:bg-green-600/10 hover:shadow-lg hover:shadow-green-500/10';
+                        item.innerHTML = `
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl font-bold text-white shrink-0">${w}</span>
+                                <div class="flex-1 min-w-0">
+                                    ${pinyin ? `<span class="text-sm text-purple-400 font-mono block mb-1">${pinyin}</span>` : ''}
+                                    <span class="text-sm text-slate-300 leading-relaxed">${english}</span>
+                                </div>
+                            </div>
+                        `;
+                        item.addEventListener('click', () => selectWord(w));
+                        charWordsContainer.appendChild(item);
+                    });
+                } else {
+                    charWordsContainer.innerHTML = `<span class="text-xs text-slate-500 italic">No common words found for "${target}".</span>`;
+                }
+            } else {
+                charWordsSection.classList.add('hidden');
+            }
+
+            // --- C. COMMON COMPOUND WORDS & USAGE — ALWAYS RENDERED ---
             const compoundsList = document.getElementById('compoundWordsList');
             compoundsList.innerHTML = '';
+            const compoundSet = new Map();
+            seenChars.forEach(c => {
+                (charToCompoundsMap[c] || []).forEach(e => { if (!compoundSet.has(e.word)) compoundSet.set(e.word, e); });
+            });
 
-            if (entry.compounds && entry.compounds.length > 0) {
-                entry.compounds.forEach(c => {
+            if (compoundSet.size > 0) {
+                compoundSet.forEach((mapEntry, w) => {
+                    const wi = wordDefinitions[w] || (dictionaryDB[w] || null);
+                    const pinyin = (wi && wi.pinyin) || (mapEntry && mapEntry.pinyin) || '';
+                    const english = (wi && wi.english) || (mapEntry && mapEntry.english) || '';
                     const item = document.createElement('div');
                     item.className = 'p-4 rounded-xl border transition cursor-pointer mb-3 bg-panelBg/80 border-slate-800 hover:border-blue-500/50 hover:bg-blue-600/10 hover:shadow-lg hover:shadow-blue-500/10';
                     item.innerHTML = `
                         <div class="flex items-start gap-4">
-                            <span class="text-2xl font-bold text-white shrink-0">${c.word}</span>
+                            <span class="text-2xl font-bold text-white shrink-0">${w}</span>
                             <div class="flex-1 min-w-0">
-                                <span class="text-lg text-purple-400 font-mono block mb-1">${c.pinyin}</span>
-                                <span class="text-base text-slate-300 leading-relaxed">${c.english}</span>
+                                <span class="text-lg text-purple-400 font-mono block mb-1">${pinyin}</span>
+                                <span class="text-base text-slate-300 leading-relaxed">${english}</span>
                             </div>
                         </div>
                     `;
-                    item.addEventListener('click', () => updateDictionaryPanel(c.word, null));
+                    item.addEventListener('click', () => selectWord(w));
                     compoundsList.appendChild(item);
                 });
             } else {
@@ -1301,77 +1348,16 @@
             }
         }
 
-        // Native Web Speech API Audio
-        let audioEnabled = true;
-        let emojiAnimEnabled = true;
-
-        function speakChinese(text) {
-            if (!audioEnabled) return;
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'zh-CN';
-                utterance.rate = 0.85;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function toggleAudio() {
-            audioEnabled = !audioEnabled;
-            const btn = document.getElementById('audioToggleBtn');
-            const icon = document.getElementById('audioToggleIcon');
-            const text = document.getElementById('audioToggleText');
-            if (audioEnabled) {
-                btn.classList.remove('text-red-400', 'border-red-500');
-                btn.classList.add('text-green-400', 'border-green-500');
-                icon.classList.remove('fa-volume-xmark');
-                icon.classList.add('fa-volume-high');
-                text.textContent = 'Audio: On';
-            } else {
-                btn.classList.remove('text-green-400', 'border-green-500');
-                btn.classList.add('text-red-400', 'border-red-500');
-                icon.classList.remove('fa-volume-high');
-                icon.classList.add('fa-volume-xmark');
-                text.textContent = 'Audio: Off';
-                // Stop any currently playing audio
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-            }
-        }
-
-        function toggleEmojiAnim() {
-            emojiAnimEnabled = !emojiAnimEnabled;
-            const btn = document.getElementById('emojiAnimToggleBtn');
-            const icon = document.getElementById('emojiAnimToggleIcon');
-            const text = document.getElementById('emojiAnimToggleText');
-            const targetEmoji = document.getElementById('targetEmoji');
-            if (emojiAnimEnabled) {
-                btn.classList.remove('text-slate-400', 'border-slate-500');
-                btn.classList.add('text-amber-400', 'border-amber-500');
-                icon.classList.remove('fa-circle-stop');
-                icon.classList.add('fa-circle-notch');
-                text.textContent = 'Anim: On';
-                targetEmoji.classList.add('animate-bounce');
-            } else {
-                btn.classList.remove('text-amber-400', 'border-amber-500');
-                btn.classList.add('text-slate-400', 'border-slate-500');
-                icon.classList.remove('fa-circle-notch');
-                icon.classList.add('fa-circle-stop');
-                text.textContent = 'Anim: Off';
-                targetEmoji.classList.remove('animate-bounce');
-            }
-        }
-
         // Render Multi-Character Selection View (up to 10 highlighted characters)
-        function renderMultiSelection(text) {
+        function renderMultiSelection() {
+            const sel = appState.multiSelection;
+            const text = sel.text;
             const chars = [...text];
             const section = document.getElementById('multiSelectSection');
             document.getElementById('singleEntryCard').classList.add('hidden');
             section.classList.remove('hidden');
 
-            // Keep the toolbar Audio button working: point it at the full selection
-            document.getElementById('targetHanzi').textContent = text;
-
-            const combinedPinyin = chars.map(c => (singleCharDB[c] || {}).pinyin || '').join(' ');
+            const combinedPinyin = chars.map(c => (singleCharDB[c] || {}).pinyin || '').filter(Boolean).join(' ');
 
             let html = `
                 <div class="bg-cardBg rounded-2xl p-4 border border-blue-500/40 shadow-2xl flex items-center justify-between gap-3 sticky top-0 z-10">
@@ -1394,18 +1380,29 @@
             `;
 
             chars.forEach(c => {
-                const info = singleCharDB[c] || { pinyin: '?', english: 'No definition available', radical: '', emoji: '🔤', words: [] };
-                const wordChips = (info.words || []).map(w => {
-                    const def = wordDefinitions[w] || {};
-                    return `<span class="inline-flex items-baseline gap-1.5 px-2.5 py-1 rounded-lg bg-panelBg/80 border border-slate-800 text-xs" title="${def.english || ''}">
+                const info = singleCharDB[c] || { pinyin: '?', english: 'No definition available', radical: '', emoji: '🔤' };
+
+                // Merged word chips: char DB words + every known word containing this char (capped at 8)
+                const merged = [];
+                const seenW = new Set();
+                ((singleCharDB[c] || {}).words || []).forEach(w => { if (!seenW.has(w)) { seenW.add(w); merged.push(w); } });
+                (charToCompoundsMap[c] || []).forEach(e => { if (!seenW.has(e.word)) { seenW.add(e.word); merged.push(e.word); } });
+                const chipWords = merged.slice(0, 8);
+                const extra = merged.length - chipWords.length;
+
+                const wordChips = chipWords.map(w => {
+                    const wi = wordDefinitions[w] || (dictionaryDB[w] || null);
+                    const p = (wi && wi.pinyin) || '';
+                    const en = (wi && wi.english) || '';
+                    return `<span class="inline-flex items-baseline gap-1.5 px-2.5 py-1 rounded-lg bg-panelBg/80 border border-slate-800 text-xs" title="${en}">
                         <span class="text-slate-100 font-semibold">${w}</span>
-                        <span class="text-purple-400 font-mono text-[10px]">${def.pinyin || ''}</span>
-                        <span class="text-slate-400 text-[10px]">${def.english || ''}</span>
+                        <span class="text-purple-400 font-mono text-[10px]">${p}</span>
+                        <span class="text-slate-400 text-[10px]">${en}</span>
                     </span>`;
                 }).join('');
 
                 html += `
-                <div class="bg-cardBg rounded-2xl p-4 border border-slate-700/50 shadow-xl cursor-pointer hover:border-blue-500/60 transition" onclick="updateDictionaryPanel('${c}', '${c}')" title="Click to inspect ${c}">
+                <div class="bg-cardBg rounded-2xl p-4 border border-slate-700/50 shadow-xl cursor-pointer hover:border-blue-500/60 transition" onclick="selectChar('${c}')" title="Click to inspect ${c}">
                     <div class="flex items-center gap-4">
                         <div class="flex flex-col items-center shrink-0">
                             <span class="text-4xl font-bold text-white leading-none">${c}</span>
@@ -1420,39 +1417,33 @@
                         </div>
                         <i class="fa-solid fa-angle-right text-slate-600 shrink-0"></i>
                     </div>
-                    ${info.words && info.words.length ? `<div class="mt-3 pt-3 border-t border-slate-800/70 flex flex-wrap gap-1.5">${wordChips}</div>` : ''}
+                    ${chipWords.length ? `<div class="mt-3 pt-3 border-t border-slate-800/70 flex flex-wrap gap-1.5">${wordChips}${extra > 0 ? `<span class="text-[10px] text-slate-500 self-center">+${extra} more</span>` : ''}</div>` : ''}
                 </div>`;
             });
 
-            // Aggregate compounds from dictionaryDB for every selected character,
-            // so the "Common Compound Words & Usage" section is never hidden.
-            const seen = new Set();
-            const aggregateCompounds = [];
+            // Aggregate compounds from the reverse index for every selected
+            // character — ALWAYS rendered, placeholder only if truly unknown.
+            const compoundSet = new Map();
             chars.forEach(c => {
-                const dbEntry = dictionaryDB[c];
-                if (dbEntry && dbEntry.compounds) {
-                    dbEntry.compounds.forEach(cp => {
-                        if (!seen.has(cp.word)) {
-                            seen.add(cp.word);
-                            aggregateCompounds.push(cp);
-                        }
-                    });
-                }
+                (charToCompoundsMap[c] || []).forEach(e => { if (!compoundSet.has(e.word)) compoundSet.set(e.word, e); });
             });
 
-            // ALWAYS render the compounds section — placeholder when empty —
-            // so the header is visible for every selection.
-            const compoundCards = aggregateCompounds.length > 0
-                ? aggregateCompounds.map(cp => `
-                    <div class="p-4 rounded-xl border transition cursor-pointer mb-3 bg-panelBg/80 border-slate-800 hover:border-blue-500/50 hover:bg-blue-600/10 hover:shadow-lg hover:shadow-blue-500/10" onclick="updateDictionaryPanel('${cp.word}', null)">
+            const compoundCards = compoundSet.size > 0
+                ? [...compoundSet.values()].map(e => {
+                    const wi = wordDefinitions[e.word] || (dictionaryDB[e.word] || null);
+                    const pinyin = (wi && wi.pinyin) || e.pinyin || '';
+                    const english = (wi && wi.english) || e.english || '';
+                    return `
+                    <div class="p-4 rounded-xl border transition cursor-pointer mb-3 bg-panelBg/80 border-slate-800 hover:border-blue-500/50 hover:bg-blue-600/10 hover:shadow-lg hover:shadow-blue-500/10" onclick="selectWord('${e.word}')">
                         <div class="flex items-start gap-4">
-                            <span class="text-2xl font-bold text-white shrink-0">${cp.word}</span>
+                            <span class="text-2xl font-bold text-white shrink-0">${e.word}</span>
                             <div class="flex-1 min-w-0">
-                                <span class="text-lg text-purple-400 font-mono block mb-1">${cp.pinyin}</span>
-                                <span class="text-base text-slate-300 leading-relaxed">${cp.english}</span>
+                                <span class="text-lg text-purple-400 font-mono block mb-1">${pinyin}</span>
+                                <span class="text-base text-slate-300 leading-relaxed">${english}</span>
                             </div>
                         </div>
-                    </div>`).join('')
+                    </div>`;
+                }).join('')
                 : `<span class="text-xs text-slate-500 italic">No dictionary compounds for the selected characters — click a character card above to inspect it.</span>`;
 
             html += `
@@ -1464,7 +1455,6 @@
                     ${compoundCards}
                 </div>`;
 
-            // Passage context stays available in multi-select mode too
             html += `
                 <div class="bg-cardBg rounded-2xl p-4 border border-slate-700/50 shadow-xl">
                     <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
@@ -1479,62 +1469,111 @@
             document.getElementById('dictionaryDisplay').scrollTop = 0;
         }
 
-        // Highlight Selection — drag-select only (prevents double-click flash)
-        // Double-clicks select 2+ chars with NO pointer movement; requiring
-        // movement keeps the click/double-click drill-down working and stops
-        // the multi-select view from hijacking rapid clicks.
-        let mouseDownPos = null;
-        let shiftHeld = false;
-
-        document.addEventListener('keydown', (e) => { if (e.key === 'Shift') shiftHeld = true; });
-        document.addEventListener('keyup', (e) => { if (e.key === 'Shift') shiftHeld = false; });
-
-        document.addEventListener('mousedown', (e) => {
-            mouseDownPos = { x: e.clientX, y: e.clientY };
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            const moved = mouseDownPos && (
-                Math.abs(e.clientX - mouseDownPos.x) > 6 ||
-                Math.abs(e.clientY - mouseDownPos.y) > 6
-            );
-            mouseDownPos = null;
-            if (!moved) return; // plain click or double-click → ignore
-
-            const selection = window.getSelection();
-            const text = selection ? selection.toString().trim() : '';
-            if (text && text.length >= 2 && text.length <= 10 && /^[\u4e00-\u9fa5]+$/.test(text)) {
-                renderMultiSelection(text);
+        // ============================================================
+        // SPEECH & TOGGLES
+        // ============================================================
+        function speakChinese(text) {
+            if (!appState.audioEnabled) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
             }
-        });
-
-        // Keyboard selections (Shift+Arrow) have no mouse events
-        document.addEventListener('selectionchange', () => {
-            if (!shiftHeld) return;
-            const selection = window.getSelection();
-            const text = selection ? selection.toString().trim() : '';
-            if (text && text.length >= 2 && text.length <= 10 && /^[\u4e00-\u9fa5]+$/.test(text)) {
-                renderMultiSelection(text);
-            }
-        });
-
-        // Exit multi-select view, restoring the last inspected entry
-        let lastEntry = { phrase: '算法', focused: null };
-        function exitMultiSelect() {
-            updateDictionaryPanel(lastEntry.phrase, lastEntry.focused);
         }
 
-        // App Initialization
-        document.addEventListener('DOMContentLoaded', () => {
-            renderReadingContent(defaultSampleText);
-            updateDictionaryPanel("算法", null);
+        function toggleAudio() {
+            appState.audioEnabled = !appState.audioEnabled;
+            const btn = document.getElementById('audioToggleBtn');
+            const icon = document.getElementById('audioToggleIcon');
+            const text = document.getElementById('audioToggleText');
+            if (appState.audioEnabled) {
+                btn.classList.remove('text-red-400', 'border-red-500');
+                btn.classList.add('text-green-400', 'border-green-500');
+                icon.classList.remove('fa-volume-xmark');
+                icon.classList.add('fa-volume-high');
+                text.textContent = 'Audio: On';
+            } else {
+                btn.classList.remove('text-green-400', 'border-green-500');
+                btn.classList.add('text-red-400', 'border-red-500');
+                icon.classList.remove('fa-volume-high');
+                icon.classList.add('fa-volume-xmark');
+                text.textContent = 'Audio: Off';
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        }
 
-            // Toggle Pinyin
+        function toggleEmojiAnim() {
+            appState.emojiAnimEnabled = !appState.emojiAnimEnabled;
+            const btn = document.getElementById('emojiAnimToggleBtn');
+            const icon = document.getElementById('emojiAnimToggleIcon');
+            const text = document.getElementById('emojiAnimToggleText');
+            if (appState.emojiAnimEnabled) {
+                btn.classList.remove('text-slate-400', 'border-slate-500');
+                btn.classList.add('text-amber-400', 'border-amber-500');
+                icon.classList.remove('fa-circle-stop');
+                icon.classList.add('fa-circle-notch');
+                text.textContent = 'Anim: On';
+            } else {
+                btn.classList.remove('text-amber-400', 'border-amber-500');
+                btn.classList.add('text-slate-400', 'border-slate-500');
+                icon.classList.remove('fa-circle-notch');
+                icon.classList.add('fa-circle-stop');
+                text.textContent = 'Anim: Off';
+            }
+            updateDictionaryPanel(); // Re-apply animate-bounce from state
+        }
+
+        // ============================================================
+        // MULTI-SELECT INPUT — mouseup on the reading pane ONLY, and only
+        // after real pointer movement (>6px). No document-wide handlers,
+        // no selectionchange, no shift flags: double-clicks can never
+        // hijack clicks, so nothing flashes.
+        // ============================================================
+        (function setupMultiSelectInput() {
+            const readingEl = document.getElementById('readingContainer');
+            let mouseDownPos = null;
+
+            readingEl.addEventListener('mousedown', (e) => {
+                mouseDownPos = { x: e.clientX, y: e.clientY };
+            });
+
+            readingEl.addEventListener('mouseup', (e) => {
+                const moved = mouseDownPos && (
+                    Math.abs(e.clientX - mouseDownPos.x) > 6 ||
+                    Math.abs(e.clientY - mouseDownPos.y) > 6
+                );
+                mouseDownPos = null;
+                if (!moved) return; // plain click or double-click → ignore
+
+                const selection = window.getSelection();
+                if (!selection || selection.isCollapsed) return;
+                const raw = selection.toString();
+                const clean = raw.replace(/[^\u4e00-\u9fa5]/g, '');
+                if (clean.length < 2 || clean.length > 10) return;
+
+                // Map the browser selection onto our global char indices
+                const nodes = [...readingEl.querySelectorAll('.hz-char')].filter(el => selection.containsNode(el, true));
+                if (nodes.length === 0) return;
+                const start = parseInt(nodes[0].dataset.idx);
+                const end = parseInt(nodes[nodes.length - 1].dataset.idx);
+                selectMulti(clean, start, end);
+            });
+        })();
+
+        // ============================================================
+        // APP INITIALIZATION
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            renderReadingContent(appState.currentText);
+            selectWord('算法');
+
+            // Toggle Pinyin — re-render from state (not from the textarea!)
             document.getElementById('togglePinyinBtn').addEventListener('click', () => {
-                showPinyin = !showPinyin;
-                document.getElementById('pinyinBtnText').textContent = showPinyin ? "Hide Pinyin" : "Show Pinyin";
-                const currentText = document.getElementById('customTextInput').value || defaultSampleText;
-                renderReadingContent(currentText);
+                appState.showPinyin = !appState.showPinyin;
+                document.getElementById('pinyinBtnText').textContent = appState.showPinyin ? 'Hide Pinyin' : 'Show Pinyin';
+                renderReadingContent(appState.currentText);
             });
 
             // Text Input Controls
@@ -1545,23 +1584,41 @@
             document.getElementById('loadTextBtn').addEventListener('click', () => {
                 const text = document.getElementById('customTextInput').value.trim();
                 if (text) {
+                    appState.currentText = text;
+                    appState.activeTarget = '算法';
+                    appState.multiSelection = null;
                     renderReadingContent(text);
+                    applySelection();
                     editorModal.classList.add('hidden');
                 }
             });
 
             document.getElementById('resetDefaultBtn').addEventListener('click', () => {
                 document.getElementById('customTextInput').value = defaultSampleText;
+                appState.currentText = defaultSampleText;
+                appState.activeTarget = '算法';
+                appState.multiSelection = null;
                 renderReadingContent(defaultSampleText);
+                applySelection();
                 editorModal.classList.add('hidden');
             });
 
-            // Dictionary Search
+            // Dictionary Search — exact match first, then pinyin/English scan
             const searchInput = document.getElementById('dictionarySearch');
             searchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const query = searchInput.value.trim();
-                    if (query) updateDictionaryPanel(query, null);
+                if (e.key !== 'Enter') return;
+                const q = searchInput.value.trim();
+                if (!q) return;
+                if (wordDefinitions[q] || dictionaryDB[q] || singleCharDB[q]) {
+                    selectWord(q);
+                } else {
+                    const lower = q.toLowerCase();
+                    const compact = lower.replace(/\s/g, '');
+                    const hit = Object.keys(wordDefinitions).find(w =>
+                        wordDefinitions[w].pinyin.replace(/\s/g, '').toLowerCase() === compact ||
+                        wordDefinitions[w].english.toLowerCase().includes(lower)
+                    );
+                    selectWord(hit || q);
                 }
             });
 
@@ -1580,10 +1637,13 @@
                     const res = await fetch(`tutorials/rust-course/${tutorialId}.json`);
                     if (!res.ok) throw new Error('Tutorial not found');
                     const data = await res.json();
+                    appState.currentText = data.content;
+                    appState.activeTarget = '算法';
+                    appState.multiSelection = null;
                     renderReadingContent(data.content);
+                    applySelection();
                     document.getElementById('tutorialBtnText').textContent = `Tutorial: ${data.title}`;
                     tutorialDropdown.classList.add('hidden');
-                    // Scroll to top of reading pane
                     document.getElementById('readingContainer').scrollTop = 0;
                 } catch (err) {
                     console.error('Failed to load tutorial:', err);
@@ -1599,13 +1659,11 @@
 
             // TTS Speech Buttons
             document.getElementById('ttsButton').addEventListener('click', () => {
-                const target = document.getElementById('targetHanzi').textContent;
-                speakChinese(target);
+                speakChinese(appState.multiSelection ? appState.multiSelection.text : appState.activeTarget);
             });
 
             document.getElementById('speakFullBtn').addEventListener('click', () => {
-                const text = window.getSelection().toString() || defaultSampleText;
-                speakChinese(text);
+                speakChinese(appState.currentText);
             });
 
             // Audio Toggle
@@ -1630,20 +1688,20 @@
 
             document.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
-                
+
                 const containerRect = document.querySelector('main').getBoundingClientRect();
                 const offsetX = e.clientX - containerRect.left;
                 const totalWidth = containerRect.width;
-                
+
                 // Calculate percentages with min/max constraints
                 const minWidthPx = 300;
                 const maxPercent = 80;
                 const minPercent = (minWidthPx / totalWidth) * 100;
-                
+
                 let leftPercent = (offsetX / totalWidth) * 100;
                 leftPercent = Math.max(minPercent, Math.min(maxPercent, leftPercent));
                 const rightPercent = 100 - leftPercent;
-                
+
                 leftPanel.style.width = `${leftPercent}%`;
                 rightPanel.style.width = `${rightPercent}%`;
             });
@@ -1667,20 +1725,20 @@
 
             document.addEventListener('touchmove', (e) => {
                 if (!isDragging) return;
-                
+
                 const touch = e.touches[0];
                 const containerRect = document.querySelector('main').getBoundingClientRect();
                 const offsetX = touch.clientX - containerRect.left;
                 const totalWidth = containerRect.width;
-                
+
                 const minWidthPx = 300;
                 const maxPercent = 80;
                 const minPercent = (minWidthPx / totalWidth) * 100;
-                
+
                 let leftPercent = (offsetX / totalWidth) * 100;
                 leftPercent = Math.max(minPercent, Math.min(maxPercent, leftPercent));
                 const rightPercent = 100 - leftPercent;
-                
+
                 leftPanel.style.width = `${leftPercent}%`;
                 rightPanel.style.width = `${rightPercent}%`;
             }, { passive: false });
@@ -1718,13 +1776,14 @@
                 ];
 
                 const criticalFunctions = [
-                    'renderReadingContent', 'updateDictionaryPanel', 'speakChinese',
-                    'toggleAudio', 'toggleEmojiAnim', 'loadTutorial', 'renderMultiSelection',
-                    'navigateLeft', 'navigateRight', 'focusCharAtIndex',
+                    'renderReadingContent', 'updateDictionaryPanel', 'renderMultiSelection',
+                    'selectWord', 'selectChar', 'selectMulti', 'exitMultiSelect',
+                    'speakChinese', 'toggleAudio', 'toggleEmojiAnim', 'loadTutorial',
+                    'navigateLeft', 'navigateRight', 'focusCharAtIndex', 'refreshHighlights',
                 ];
 
                 let allOk = true;
-                
+
                 // Check elements
                 for (const id of criticalElements) {
                     const el = document.getElementById(id);
@@ -1738,10 +1797,9 @@
 
                 // Check functions
                 for (const fn of criticalFunctions) {
-                    if (typeof window[fn] !== 'function' && typeof eval(fn) !== 'function') {
-                        // Functions are in local scope, check differently
+                    if (typeof window[fn] !== 'function') {
                         try {
-                            eval(fn);
+                            if (typeof eval(fn) !== 'function') throw new Error('missing');
                             console.log(`✅ Function available: ${fn}`);
                         } catch (e) {
                             console.error(`❌ MISSING FUNCTION: ${fn}`);
@@ -1755,11 +1813,6 @@
                 // Check tutorial items
                 const tutorialItems = document.querySelectorAll('.tutorial-item');
                 console.log(`✅ Tutorial items found: ${tutorialItems.length}`);
-                tutorialItems.forEach((item, i) => {
-                    const tutId = item.dataset.tutorial;
-                    if (!tutId) console.error(`❌ Tutorial item ${i} missing data-tutorial`);
-                    else console.log(`✅ Tutorial item ${i}: ${tutId}`);
-                });
 
                 // Check data structures
                 if (typeof singleCharDB === 'object' && Object.keys(singleCharDB).length > 0) {
@@ -1780,6 +1833,35 @@
                     console.error('❌ wordDefinitions missing or empty');
                     allOk = false;
                 }
+                console.log(`✅ charToCompoundsMap: ${Object.keys(charToCompoundsMap).length} characters indexed with compound words`);
+
+                // === CONTENT POPULATION CHECKS (does it actually render?) ===
+                const breakdown = document.getElementById('charBreakdownContainer');
+                if (breakdown && breakdown.children.length > 0) {
+                    console.log(`✅ Breakdown tiles rendered: ${breakdown.children.length}`);
+                } else {
+                    console.error('❌ Individual Character Breakdown is EMPTY');
+                    allOk = false;
+                }
+
+                const compounds = document.getElementById('compoundWordsList');
+                if (compounds && compounds.children.length > 0) {
+                    console.log(`✅ Compound cards rendered: ${compounds.children.length}`);
+                } else {
+                    console.error('❌ Common Compound Words & Usage is EMPTY');
+                    allOk = false;
+                }
+
+                const scrollArea = document.getElementById('dictionaryDisplay');
+                if (scrollArea) {
+                    const oy = window.getComputedStyle(scrollArea).overflowY;
+                    if (oy === 'auto' || oy === 'scroll') {
+                        console.log(`✅ Right panel scroll area overflow-y: ${oy}`);
+                    } else {
+                        console.error(`❌ Right panel is NOT scrollable (overflow-y: ${oy})`);
+                        allOk = false;
+                    }
+                }
 
                 if (allOk) {
                     console.log('%c✅ ALL VERIFICATION CHECKS PASSED', 'color: #22c55e; font-weight: bold; font-size: 14px;');
@@ -1790,7 +1872,7 @@
                 return allOk;
             }
 
-            // Run verification after a short delay to ensure all async ops complete
+            // Run verification after a short delay to ensure first render completed
             setTimeout(verifyElements, 100);
 
             // Expose verification for manual testing
@@ -1799,3 +1881,4 @@
     </script>
 </body>
 </html>
+
