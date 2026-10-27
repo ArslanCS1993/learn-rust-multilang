@@ -988,6 +988,14 @@
         };
 
         // ============================================================
+        // ============================================================
+        // INLINED READING PAGES — every page is embedded here, so the
+        // reader works with NO network request (file://, offline, or
+        // any browser/extension that blocks fetch). Keyed by the
+        // data-tutorial path used by the dropdown.
+        // ============================================================
+        const TUTORIALS = {"algorithms/01-bubble-sort":{"title":"简单算法：冒泡排序","content":"冒泡排序是一种最简单的排序算法。它的想法很好懂：把一组数字从小到大排好。\n\n怎么排呢？我们从第一个数字开始，把相邻的两个数字比较一下。如果左边的数字比右边的大，就把它们交换位置。然后向后移动一位，继续比较下一对。这样从头到尾走一遍，最大的数字就会像水里的气泡一样，慢慢浮到最后面。这就是“冒泡”这个名字的由来。\n\n第一遍走完以后，最后一个位置已经是最大的数字了。然后我们再从头开始，走第二遍、第三遍。每一遍都会把剩下数字里最大的那个放到正确的位置上。走了几遍以后，所有的数字就都排好了。\n\n举个例子：我们有一组数字：五、三、八、一。\n第一遍：先比较五和三，五比较大，交换位置，变成三、五、八、一。再比较五和八，五比较小，不用交换。最后比较八和一，八比较大，交换位置，变成三、五、一、八。现在，八已经在最后面了。\n第二遍：比较三和五，不用交换。再比较五和一，五比较大，交换位置，变成三、一、五、八。\n第三遍：比较三和一，三比较大，交换位置，变成一、三、五、八。完成了！所有的数字都从小到大排好了。\n\n冒泡排序很简单，也很容易写，但是它比较慢。数字很多的时候，电脑要做很多很多次比较，所以在实际工作中，我们一般会使用更快的算法。不过，因为冒泡排序的想法最简单，它常常是大家学习编程的时候遇到的第一个排序算法。"},"algorithms/02-binary-search":{"title":"简单算法：二分查找","content":"二分查找是一种很快的查找算法。它的前提是：数字必须已经排好序（从小到大）。\n\n想象你在一本已经排好页码的字典里找一个字。你不会从第一页翻到最后一页，你会打开中间一页，看看找的字在前半本还是后半本，然后把不需要的那一半扔掉，再在剩下的一半里找中间……每一次都把范围减半，所以非常快。\n\n怎么做呢？我们有两个标记：左边界和右边界。一开始，左边界是第一个位置，右边界是最后一个位置。\n第一步：算出中间位置。看中间的数字。\n第二步：如果中间的数字就是要找的，找到了，结束。\n第三步：如果要找的数字比中间的小，说明它在左半边，把右边界移到中间的左边。\n第四步：如果要找的数字比中间的大，说明它在右半边，把左边界移到中间的右边。\n第五步：重复上面的步骤，直到找到，或者左边界超过了右边界（说明没有这个数字）。\n\n举个例子：我们在一组已经排好的数字里找“七”。\n数字是：一、三、五、七、九、一一、一三。\n第一遍：左边界是位置一，右边界是位置七。中间是位置四，数字是“七”。正好找到了！只用了一次比较。\n\n再举个例子：找“六”（这组里没有）。\n第一遍：左一，右七，中四是“七”。六比七小，右边界变成位置三。\n第二遍：左一，右三，中二是“三”。六比三大，左边界变成位置三。\n第三遍：左三，右三，中三是“五”。六比五大，左边界变成位置四。\n现在左边界（四）超过了右边界（三），停止。结论：没有找到“六”。\n\n二分查找非常快。一千个数字最多十次比较；一百万个数字最多二十次。但是它要求数字必须先排好序。如果数字没排序，就得先排序，或者用别的方法。"},"algorithms/03-selection-sort":{"title":"简单算法：选择排序","content":"选择排序是一种很直观的排序算法。它的想法是：每一轮都在剩下的数字里找到最小的，放到正确的位置上。\n\n怎么做呢？\n第一步：从第一个位置开始，在所有数字里找最小的。\n第二步：把找到的最小数字，和第一个位置的数字交换。现在第一个位置已经是最小的了。\n第三步：从第二个位置开始，在剩下的数字里找最小的。\n第四步：把它和第二个位置的数字交换。现在前两个位置都排好了。\n第五步：继续这样做，每一轮都把剩下里最小的放到当前位置。直到最后一个位置，所有数字都排好了。\n\n为什么叫“选择”排序？因为每一轮都在“选择”最小的那个数字。\n\n举个例子：我们有一组数字：八、三、五、一、九。\n第一轮：在所有五个数字里找最小的，是“一”，在位置四。把“一”和位置一的“八”交换。变成：一、三、五、八、九。\n第二轮：在后四个数字里找最小的，是“三”，在位置二。不用交换，已经在正确位置。\n第三轮：在后三个数字里找最小的，是“五”，在位置三。不用交换。\n第四轮：在后两个数字里找最小的，是“八”，在位置四。不用交换。\n最后剩下“九”，自然在最后。完成了！结果：一、三、五、八、九。\n\n选择排序很容易懂，也容易写。但是它比较慢：不管数字本来有多有序，它都要把所有数字都比一遍。一百个数字要比较接近五千次。所以实际工作中，数据量大时我们不用它。不过它有一个小优点：交换次数很少，最多只要交换 n-1 次。如果交换很慢（比如移动大对象），它比冒泡排序稍微好一点。"},"algorithms/04-linear-search":{"title":"简单算法：线性查找","content":"线性查找是最简单、最自然的查找方法。它的想法就是：从头开始，一个一个看，直到找到为止。\n\n不需要数字排好序，也不需要复杂的逻辑。就像你在一堆没整理的书里找一本书，只能一本一本翻，直到翻到那本。\n\n怎么做呢？\n第一步：从第一个数字开始。\n第二步：看当前数字是不是要找的。如果是，找到了，结束。\n第三步：如果不是，移到下一个位置。\n第四步：重复第二、三步，直到看完所有数字。如果看完都没找到，说明没有这个数字。\n\n举个例子：我们在一组数字里找“四”。\n数字是：七、二、四、九、一。\n第一步：看“七”，不是“四”，继续。\n第二步：看“二”，不是“四”，继续。\n第三步：看“四”，就是要找的！在位置三找到了，结束。\n\n再举个例子：找“六”（这组里没有）。\n看“七”不是，看“二”不是，看“四”不是，看“九”不是，看“一”不是。看完了五个数字，都不是“六”。结论：没有找到。\n\n线性查找优点：简单，不需要排序，适合数据很少、或者只查一次的情况。\n缺点：慢。一百个数字最坏要看一百次；一万个要看一万次。数据量大时，二分查找快得多（一万个数字二分查找只需十四次左右）。\n\n什么时候用线性查找？数据很少（比如十个以内）；数据没排序且不想排序；只查一次，不值得排序的开销。什么时候用二分查找？数据已经排好序，且数据量大、要查很多次。"},"rust-course/01-hello-cargo":{"title":"寻找牛刀，以便小试","content":"## 寻找牛刀，以便小试\n\n\u003e 磨刀不误砍柴工。在正式学习 Rust 语法前，我们先要把工具链装好、跑通第一个程序。\n\n---\n\n### 1. 安装 Rust\n\n**推荐方式：rustup** (官方版本管理工具)\n\n```bash\n# Linux / macOS\ncurl --proto \u0027=https\u0027 --tlsv1.2 -sSf https://sh.rustup.rs | sh\n\n# Windows (PowerShell)\nirm https://sh.rustup.rs | iex\n```\n\n安装完成后重启终端，验证：\n\n```bash\nrustc --version\n# rustc 1.75.0 (82e1608df 2023-12-21)\n\ncargo --version\n# cargo 1.75.0 (1d8b05c23 2023-11-20)\n```\n\n\u003e **rustup** 会安装 `rustc` (编译器)、`cargo` (构建工具/包管理器)、`rustdoc` (文档生成) 并自动配置 PATH。\n\n---\n\n### 2. Hello, World!\n\n创建一个单文件程序：\n\n```bash\nmkdir hello \u0026\u0026 cd hello\ncat \u003e main.rs \u003c\u003c\u0027EOF\u0027\nfn main() {\n    println!(\"你好，世界！\");\n}\nEOF\n```\n\n编译并运行：\n\n```bash\nrustc main.rs\n./main          # Windows 用 .\\main.exe\n# 输出: 你好，世界！\n```\n\n**关键点**：\n- `fn main() {}` — 程序入口，无参数、无返回值\n- `println!` — **宏** (以 `!` 结尾)，不是函数，编译期展开，支持格式化输出\n- Rust 源文件扩展名 `.rs`，用 UTF-8 编码\n\n---\n\n### 3. 认识 Cargo\n\nCargo 是 Rust 的**构建系统 + 包管理器**，类似 npm / pip / Maven。\n\n**核心功能**：\n- `cargo new` — 创建新项目\n- `cargo build` — 编译项目\n- `cargo run` — 编译并运行\n- `cargo check` — 快速检查错误 (不生成二进制)\n- `cargo test` — 运行测试\n- `cargo doc` — 生成文档\n- `cargo publish` — 发布到 crates.io\n\n---\n\n### 4. 创建第一个 Cargo 项目\n\n```bash\ncargo new hello_cargo\ncd hello_cargo\n```\n\n生成的结构：\n\n```text\nhello_cargo/\n├── Cargo.toml      # 项目清单 (元数据、依赖)\n├── src/\n│   └── main.rs     # 入口文件\n└── .gitignore      # 忽略 target/ 目录\n```\n\n**Cargo.toml** 内容：\n\n```toml\n[package]\nname = \"hello_cargo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n```\n\n- `edition = \"2021\"` — 使用 2021 版 Rust (最新稳定版特性)\n- `[dependencies]` — 这里添加第三方库\n\n**src/main.rs** 默认内容：\n\n```rust\nfn main() {\n    println!(\"Hello, world!\");\n}\n```\n\n---\n\n### 5. 运行项目\n\n```bash\ncargo run\n```\n\n输出：\n```text\n   Compiling hello_cargo v0.1.0 (/path/hello_cargo)\n    Finished dev [unoptimized + debuginfo] target(s) in 0.58s\n     Running `target/debug/hello_cargo`\nHello, world!\n```\n\n**重要区别**：\n| 命令 | 用途 | 速度 |\n|------|------|------|\n| `cargo check` | 仅类型检查，**最快**，开发时频繁用 | ⚡⚡⚡ |\n| `cargo build` | 编译生成二进制 (debug 模式) | ⚡⚡ |\n| `cargo run` | 编译 + 运行 | ⚡⚡ |\n| `cargo build --release` | 编译优化版 (生产用) | ⚡ |\n\n\u003e **开发建议**：写代码时频繁跑 `cargo check`，要运行时才用 `cargo run`。\n\n---\n\n### 6. 添加依赖\n\n在 `Cargo.toml` 的 `[dependencies]` 下添加：\n\n```toml\n[dependencies]\nrand = \"0.8\"\nserde = { version = \"1.0\", features = [\"derive\"] }\n```\n\n再次 `cargo build` 会自动下载、编译依赖并生成 `Cargo.lock` (锁定版本)。\n\n---\n\n### 7. 项目布局约定\n\n```text\nproject/\n├── Cargo.toml\n├── Cargo.lock          # 版本锁文件 (提交到 git)\n├── src/\n│   ├── main.rs         # 二进制入口\n│   ├── lib.rs          # 库入口 (可选)\n│   └── bin/            # 多二进制文件\n│       └── tool.rs\n├── tests/              # 集成测试\n├── examples/           # 示例代码\n├── benches/            # 基准测试\n└── target/             # 编译产物 (不提交 git)\n```\n\n---\n\n### 8. 常用配置\n\n**.cargo/config.toml** (全局或项目级)：\n\n```toml\n[build]\n# 并行编译作业数\njobs = 4\n\n[target.x86_64-unknown-linux-gnu]\nlinker = \"clang\"  # 使用 lld 加速链接\nrustflags = [\"-C\", \"link-arg=-fuse-ld=lld\"]\n```\n\n**环境变量**：\n```bash\nexport RUSTUP_DIST_SERVER=https://mirrors.tuna.tsinghua.edu.cn/rustup  # 清华源\nexport RUSTUP_UPDATE_ROOT=https://mirrors.tuna.tsinghua.edu.cn/rustup/rustup\n```\n\n国内用户强烈建议配置镜像源，下载速度提升 10x+。\n\n---\n\n### 9. 小结\n\n| 概念 | 说明 |\n|------|------|\n| `rustup` | 工具链管理器，切换 stable/beta/nightly |\n| `rustc` | 编译器，通常不直接用 |\n| `cargo` | 构建、测试、依赖管理、发布的一站式工具 |\n| `Cargo.toml` | 项目清单：名称、版本、版本、依赖 |\n| `Cargo.lock` | 依赖精确版本锁，**必须提交 git** |\n| `target/` | 编译产物，**不要提交 git** |\n| `edition` | Rust 版本标识：2015/2018/2021 |\n\n\u003e 下一章：**变量绑定与解构** — 学会让数据在 Rust 里「安家」。\n\n---\n\n*内容改编自 [Rust 语言圣经 (course.rs)](https://course.rs/first-try/hello-world.html) — CC-BY-NC-SA 4.0"}};
+
         // APP STATE — single source of truth.
         // Architecture ported from the working reference reader:
         // state-driven, idempotent rendering (same state -> same panel,
@@ -1681,14 +1689,21 @@
             });
             document.addEventListener('click', () => tutorialDropdown.classList.add('hidden'));
 
-            // Load Tutorial Content
+            // Load Reading Page — inlined content first (NO network needed),
+            // fetch only as a fallback for pages not embedded in TUTORIALS.
             async function loadTutorial(tutorialId) {
                 try {
-                    console.log('Loading tutorial:', tutorialId);
-                    const res = await fetch(`tutorials/${tutorialId}.json`);
-                    if (!res.ok) throw new Error('Tutorial not found: ' + res.status);
-                    const data = await res.json();
-                    console.log('Tutorial loaded:', data.title);
+                    let data = TUTORIALS[tutorialId];
+
+                    if (!data) {
+                        console.log('Not inlined, fetching:', tutorialId);
+                        const res = await fetch(`tutorials/${tutorialId}.json`);
+                        if (!res.ok) throw new Error(`HTTP ${res.status} for tutorials/${tutorialId}.json`);
+                        data = await res.json();
+                    }
+
+                    if (!data || !data.content) throw new Error(`No content found for page "${tutorialId}"`);
+
                     appState.currentText = data.content;
                     appState.activeTarget = '算法';
                     appState.multiSelection = null;
@@ -1697,9 +1712,10 @@
                     document.getElementById('tutorialBtnText').textContent = `Tutorial: ${data.title}`;
                     tutorialDropdown.classList.add('hidden');
                     document.getElementById('readingContainer').scrollTop = 0;
+                    console.log('Loaded page:', tutorialId, '—', data.title);
                 } catch (err) {
                     console.error('Failed to load tutorial:', err);
-                    alert('Failed to load tutorial: ' + err.message);
+                    alert('Failed to load page "' + tutorialId + '": ' + err.message);
                 }
             }
 
@@ -1888,6 +1904,26 @@
                     allOk = false;
                 }
                 console.log(`✅ charToCompoundsMap: ${Object.keys(charToCompoundsMap).length} characters indexed with compound words`);
+
+                // === INLINED READING PAGES (no network required) ===
+                const pageKeys = Object.keys(TUTORIALS);
+                console.log(`✅ Inlined reading pages: ${pageKeys.length} — ${pageKeys.join(', ')}`);
+                let pagesOk = true;
+                document.querySelectorAll('.tutorial-item').forEach(item => {
+                    const id = item.dataset.tutorial;
+                    if (!id) {
+                        console.error('❌ Tutorial item missing data-tutorial');
+                        pagesOk = false;
+                    } else if (!TUTORIALS[id]) {
+                        console.error(`❌ Page "${id}" is in the menu but NOT inlined (would need a network fetch)`);
+                        pagesOk = false;
+                    } else if (!TUTORIALS[id].content) {
+                        console.error(`❌ Page "${id}" is inlined but has empty content`);
+                        pagesOk = false;
+                    }
+                });
+                if (pagesOk) console.log('✅ Every dropdown page is inlined and ready (works offline / from file://)');
+                else allOk = false;
 
                 // === CONTENT POPULATION CHECKS (does it actually render?) ===
                 const breakdown = document.getElementById('charBreakdownContainer');
