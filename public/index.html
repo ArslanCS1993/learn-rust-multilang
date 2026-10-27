@@ -1684,9 +1684,11 @@
             // Load Tutorial Content
             async function loadTutorial(tutorialId) {
                 try {
+                    console.log('Loading tutorial:', tutorialId);
                     const res = await fetch(`tutorials/${tutorialId}.json`);
-                    if (!res.ok) throw new Error('Tutorial not found');
+                    if (!res.ok) throw new Error('Tutorial not found: ' + res.status);
                     const data = await res.json();
+                    console.log('Tutorial loaded:', data.title);
                     appState.currentText = data.content;
                     appState.activeTarget = '算法';
                     appState.multiSelection = null;
@@ -1697,12 +1699,14 @@
                     document.getElementById('readingContainer').scrollTop = 0;
                 } catch (err) {
                     console.error('Failed to load tutorial:', err);
+                    alert('Failed to load tutorial: ' + err.message);
                 }
             }
 
             document.querySelectorAll('.tutorial-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    console.log('Tutorial item clicked:', item.dataset.tutorial);
                     loadTutorial(item.dataset.tutorial);
                 });
             });
